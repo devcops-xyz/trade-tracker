@@ -74,6 +74,11 @@ class TradeTracker {
             this.renderTransactions();
             this.updateDashboard();
             this.showNotification('تم حذف المعاملة');
+
+            // Trigger auto-backup to Google Drive (once per day)
+            if (window.driveBackup) {
+                window.driveBackup.autoBackup();
+            }
         }
     }
 
@@ -83,6 +88,11 @@ class TradeTracker {
         this.renderTransactions();
         this.updateDashboard();
         this.showNotification('تم حذف جميع المعاملات');
+
+        // Trigger auto-backup to Google Drive (once per day)
+        if (window.driveBackup) {
+            window.driveBackup.autoBackup();
+        }
     }
 
     renderTransactions() {
