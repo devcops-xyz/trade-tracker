@@ -359,6 +359,7 @@ class GoogleDriveBackup {
                 <button class="btn-modal-secondary" onclick="window.driveBackup.cancelRestore()">
                     إلغاء
                 </button>
+                <div id="backupStatus" class="backup-status"></div>
             </div>
         `;
 
@@ -451,12 +452,19 @@ class GoogleDriveBackup {
 
     showStatus(message, type = 'info') {
         const statusEl = document.getElementById('backupStatus');
+        if (!statusEl) {
+            console.warn('Status element not found');
+            return;
+        }
+
         statusEl.textContent = message;
         statusEl.className = `backup-status ${type}`;
 
         setTimeout(() => {
-            statusEl.textContent = '';
-            statusEl.className = 'backup-status';
+            if (statusEl) {
+                statusEl.textContent = '';
+                statusEl.className = 'backup-status';
+            }
         }, 5000);
     }
 
