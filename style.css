@@ -279,6 +279,20 @@ header h1 {
     color: #e0e0e0;
     font-weight: 600;
     margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.latest-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
 }
 
 .backup-item-count {
@@ -421,6 +435,16 @@ h2 {
     direction: rtl;
     background: #0f0f23;
     color: #e0e0e0;
+}
+
+.form-group input[type="datetime-local"] {
+    direction: ltr;
+    text-align: right;
+}
+
+.form-group input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
 }
 
 .form-group input:focus {

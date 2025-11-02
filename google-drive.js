@@ -239,9 +239,17 @@ class GoogleDriveBackup {
         try {
             this.showStatus('جاري البحث عن النسخ الاحتياطية...', 'info');
 
-            // Get all backup files sorted by modification time
+            // Find the backup file first
+            await this.findBackupFile();
+
+            if (!this.fileId) {
+                this.showStatus('لم يتم العثور على نسخة احتياطية', 'error');
+                return;
+            }
+
+            // Get all revisions of the backup file
             const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files?q=name='${this.BACKUP_FILENAME}'&spaces=drive&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc`,
+                `https://www.googleapis.com/drive/v3/files/${this.fileId}/revisions?fields=revisions(id,modifiedTime,size)`,
                 {
                     headers: {
                         Authorization: `Bearer ${this.accessToken}`
@@ -255,18 +263,18 @@ class GoogleDriveBackup {
                     this.signOut();
                     return;
                 }
-                throw new Error('Failed to fetch backups');
+                throw new Error('Failed to fetch revisions');
             }
 
             const data = await response.json();
 
-            if (!data.files || data.files.length === 0) {
+            if (!data.revisions || data.revisions.length === 0) {
                 this.showStatus('لم يتم العثور على نسخ احتياطية', 'error');
                 return;
             }
 
-            // Show list of backups
-            await this.showBackupsList(data.files);
+            // Show list of revisions
+            await this.showRevisionsList(data.revisions.reverse()); // Most recent first
 
         } catch (error) {
             console.error('Restore error:', error);
@@ -274,12 +282,12 @@ class GoogleDriveBackup {
         }
     }
 
-    async showBackupsList(files) {
-        // Download the latest backup to get details
-        const backupPromises = files.map(async (file) => {
+    async showRevisionsList(revisions) {
+        // Download each revision to get details
+        const revisionPromises = revisions.map(async (revision) => {
             try {
                 const response = await fetch(
-                    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+                    `https://www.googleapis.com/drive/v3/files/${this.fileId}/revisions/${revision.id}?alt=media`,
                     {
                         headers: {
                             Authorization: `Bearer ${this.accessToken}`
@@ -290,19 +298,20 @@ class GoogleDriveBackup {
                 if (response.ok) {
                     const backupData = await response.json();
                     return {
-                        id: file.id,
+                        revisionId: revision.id,
                         timestamp: backupData.timestamp,
                         transactionCount: backupData.data?.transactions?.length || 0,
-                        modifiedTime: file.modifiedTime
+                        modifiedTime: revision.modifiedTime,
+                        isLatest: revision.id === revisions[0].id
                     };
                 }
             } catch (error) {
-                console.error('Error loading backup:', error);
+                console.error('Error loading revision:', error);
             }
             return null;
         });
 
-        const backups = (await Promise.all(backupPromises)).filter(b => b !== null);
+        const backups = (await Promise.all(revisionPromises)).filter(b => b !== null);
 
         if (backups.length === 0) {
             this.showStatus('لم يتم العثور على نسخ احتياطية صالحة', 'error');
@@ -310,7 +319,7 @@ class GoogleDriveBackup {
         }
 
         // Create backup selection UI
-        const backupListHTML = backups.map((backup, index) => {
+        const backupListHTML = backups.map((backup) => {
             const date = new Date(backup.timestamp).toLocaleString('ar-EG', {
                 year: 'numeric',
                 month: 'long',
@@ -318,13 +327,14 @@ class GoogleDriveBackup {
                 hour: '2-digit',
                 minute: '2-digit'
             });
+            const latestBadge = backup.isLatest ? '<span class="latest-badge">الأحدث</span>' : '';
             return `
-                <div class="backup-item" data-backup-id="${backup.id}">
+                <div class="backup-item" data-revision-id="${backup.revisionId}">
                     <div class="backup-item-info">
-                        <div class="backup-item-date">📅 ${date}</div>
+                        <div class="backup-item-date">📅 ${date} ${latestBadge}</div>
                         <div class="backup-item-count">📊 ${backup.transactionCount} معاملة</div>
                     </div>
-                    <button class="btn-restore-backup" onclick="window.driveBackup.restoreFromBackup('${backup.id}')">
+                    <button class="btn-restore-backup" onclick="window.driveBackup.restoreFromRevision('${backup.revisionId}')">
                         استعادة
                     </button>
                 </div>
@@ -365,7 +375,7 @@ class GoogleDriveBackup {
         this.showStatus('', 'info');
     }
 
-    async restoreFromBackup(fileId) {
+    async restoreFromRevision(revisionId) {
         if (!confirm('هل تريد استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية.')) {
             return;
         }
@@ -373,9 +383,9 @@ class GoogleDriveBackup {
         try {
             this.showStatus('جاري الاستعادة...', 'info');
 
-            // Download the file
+            // Download the specific revision
             const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+                `https://www.googleapis.com/drive/v3/files/${this.fileId}/revisions/${revisionId}?alt=media`,
                 {
                     headers: {
                         Authorization: `Bearer ${this.accessToken}`

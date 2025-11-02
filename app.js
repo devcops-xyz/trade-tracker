@@ -9,6 +9,20 @@ class TradeTracker {
         this.renderTransactions();
         this.updateDashboard();
         this.setupEventListeners();
+        this.setDefaultDate();
+    }
+
+    setDefaultDate() {
+        // Set current date and time as default
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+
+        const defaultDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        document.getElementById('transactionDate').value = defaultDateTime;
     }
 
     setupEventListeners() {
@@ -17,20 +31,13 @@ class TradeTracker {
             e.preventDefault();
             this.addTransaction();
         });
-
-        const clearBtn = document.getElementById('clearAllBtn');
-        clearBtn.addEventListener('click', () => {
-            if (confirm('هل أنت متأكد من حذف جميع المعاملات؟')) {
-                this.clearAllTransactions();
-            }
-        });
-
     }
 
     addTransaction() {
         const type = document.querySelector('input[name="type"]:checked').value;
         const amount = parseFloat(document.getElementById('amount').value);
         const description = document.getElementById('description').value;
+        const transactionDate = document.getElementById('transactionDate').value;
 
         if (!amount || amount <= 0) {
             alert('يرجى إدخال مبلغ صحيح');
@@ -42,12 +49,17 @@ class TradeTracker {
             return;
         }
 
+        if (!transactionDate) {
+            alert('يرجى اختيار تاريخ المعاملة');
+            return;
+        }
+
         const transaction = {
             id: Date.now(),
             type: type,
             amount: amount,
             description: description,
-            date: new Date().toISOString()
+            date: new Date(transactionDate).toISOString()
         };
 
         this.transactions.unshift(transaction);
@@ -57,6 +69,9 @@ class TradeTracker {
 
         // Reset form
         document.getElementById('transactionForm').reset();
+
+        // Reset date to current time
+        this.setDefaultDate();
 
         // Show success message
         this.showNotification('تمت إضافة المعاملة بنجاح ✓');
