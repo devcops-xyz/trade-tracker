@@ -239,6 +239,71 @@ header h1 {
     border: 1px solid rgba(33, 150, 243, 0.3);
 }
 
+/* Backup List Styles */
+.backup-list-section h3 {
+    color: #e0e0e0;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.backup-list {
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.backup-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #0f0f23;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.backup-item:hover {
+    background: #1a1a2e;
+    border-color: #3d4571;
+    transform: translateX(-5px);
+}
+
+.backup-item-info {
+    flex: 1;
+}
+
+.backup-item-date {
+    font-size: 1rem;
+    color: #e0e0e0;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.backup-item-count {
+    font-size: 0.9rem;
+    color: #b0b0b0;
+}
+
+.btn-restore-backup {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
+    color: white;
+    border: 1px solid #4d4d7d;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-restore-backup:hover {
+    background: linear-gradient(135deg, #3d4571 0%, #4d3d71 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }

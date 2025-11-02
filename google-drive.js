@@ -236,24 +236,146 @@ class GoogleDriveBackup {
             return;
         }
 
-        if (!confirm('هل تريد استعادة النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية.')) {
+        try {
+            this.showStatus('جاري البحث عن النسخ الاحتياطية...', 'info');
+
+            // Get all backup files sorted by modification time
+            const response = await fetch(
+                `https://www.googleapis.com/drive/v3/files?q=name='${this.BACKUP_FILENAME}'&spaces=drive&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${this.accessToken}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً', 'error');
+                    this.signOut();
+                    return;
+                }
+                throw new Error('Failed to fetch backups');
+            }
+
+            const data = await response.json();
+
+            if (!data.files || data.files.length === 0) {
+                this.showStatus('لم يتم العثور على نسخ احتياطية', 'error');
+                return;
+            }
+
+            // Show list of backups
+            await this.showBackupsList(data.files);
+
+        } catch (error) {
+            console.error('Restore error:', error);
+            this.showStatus('فشل البحث عن النسخ الاحتياطية ✗', 'error');
+        }
+    }
+
+    async showBackupsList(files) {
+        // Download the latest backup to get details
+        const backupPromises = files.map(async (file) => {
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${this.accessToken}`
+                        }
+                    }
+                );
+
+                if (response.ok) {
+                    const backupData = await response.json();
+                    return {
+                        id: file.id,
+                        timestamp: backupData.timestamp,
+                        transactionCount: backupData.data?.transactions?.length || 0,
+                        modifiedTime: file.modifiedTime
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading backup:', error);
+            }
+            return null;
+        });
+
+        const backups = (await Promise.all(backupPromises)).filter(b => b !== null);
+
+        if (backups.length === 0) {
+            this.showStatus('لم يتم العثور على نسخ احتياطية صالحة', 'error');
+            return;
+        }
+
+        // Create backup selection UI
+        const backupListHTML = backups.map((backup, index) => {
+            const date = new Date(backup.timestamp).toLocaleString('ar-EG', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            return `
+                <div class="backup-item" data-backup-id="${backup.id}">
+                    <div class="backup-item-info">
+                        <div class="backup-item-date">📅 ${date}</div>
+                        <div class="backup-item-count">📊 ${backup.transactionCount} معاملة</div>
+                    </div>
+                    <button class="btn-restore-backup" onclick="window.driveBackup.restoreFromBackup('${backup.id}')">
+                        استعادة
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        // Show in modal
+        const modal = document.getElementById('backupModal');
+        const modalBody = modal.querySelector('.modal-body');
+
+        // Save current content
+        const originalContent = modalBody.innerHTML;
+
+        // Show backup list
+        modalBody.innerHTML = `
+            <div class="backup-list-section">
+                <h3>النسخ الاحتياطية المتاحة</h3>
+                <p class="backup-description">اختر النسخة الاحتياطية التي تريد استعادتها</p>
+                <div class="backup-list">
+                    ${backupListHTML}
+                </div>
+                <button class="btn-modal-secondary" onclick="window.driveBackup.cancelRestore()">
+                    إلغاء
+                </button>
+            </div>
+        `;
+
+        // Store original content for restore
+        this.originalModalContent = originalContent;
+
+        this.showStatus('', 'info'); // Clear status
+    }
+
+    cancelRestore() {
+        const modal = document.getElementById('backupModal');
+        const modalBody = modal.querySelector('.modal-body');
+        modalBody.innerHTML = this.originalModalContent;
+        this.showStatus('', 'info');
+    }
+
+    async restoreFromBackup(fileId) {
+        if (!confirm('هل تريد استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية.')) {
             return;
         }
 
         try {
             this.showStatus('جاري الاستعادة...', 'info');
 
-            // Find the backup file
-            await this.findBackupFile();
-
-            if (!this.fileId) {
-                this.showStatus('لم يتم العثور على نسخة احتياطية', 'error');
-                return;
-            }
-
             // Download the file
             const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files/${this.fileId}?alt=media`,
+                `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
                 {
                     headers: {
                         Authorization: `Bearer ${this.accessToken}`
@@ -285,6 +407,9 @@ class GoogleDriveBackup {
 
                 const date = new Date(backupData.timestamp).toLocaleString('ar-EG');
                 this.showStatus(`✓ تم استعادة البيانات (${date})`, 'success');
+
+                // Restore modal content
+                this.cancelRestore();
             } else {
                 throw new Error('Invalid backup format');
             }
