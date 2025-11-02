@@ -33,12 +33,26 @@ class GoogleDriveBackup {
     }
 
     setupEventListeners() {
+        console.log('Setting up Google Drive event listeners...');
+        console.log('Client ID:', this.CLIENT_ID);
+
         const signInBtn = document.getElementById('signInBtn');
         const signOutBtn = document.getElementById('signOutBtn');
         const backupBtn = document.getElementById('backupBtn');
         const restoreBtn = document.getElementById('restoreBtn');
 
-        signInBtn?.addEventListener('click', () => this.signIn());
+        console.log('Sign in button found:', signInBtn !== null);
+
+        if (signInBtn) {
+            signInBtn.addEventListener('click', () => {
+                console.log('Sign in button clicked!');
+                this.signIn();
+            });
+            console.log('✓ Event listener attached to sign in button');
+        } else {
+            console.error('✗ Sign in button not found!');
+        }
+
         signOutBtn?.addEventListener('click', () => this.signOut());
         backupBtn?.addEventListener('click', () => this.backup());
         restoreBtn?.addEventListener('click', () => this.restore());
@@ -49,6 +63,12 @@ class GoogleDriveBackup {
         if (savedToken && savedEmail) {
             this.accessToken = savedToken;
             this.updateUISignedIn(savedEmail);
+        }
+
+        // Check Google API status
+        console.log('Google API loaded:', typeof google !== 'undefined');
+        if (typeof google !== 'undefined') {
+            console.log('Google accounts available:', typeof google.accounts !== 'undefined');
         }
     }
 
@@ -274,8 +294,16 @@ class GoogleDriveBackup {
 
 // Initialize Google Drive backup
 let driveBackup;
+console.log('google-drive.js loaded');
+
 window.addEventListener('load', () => {
+    console.log('Page loaded, initializing GoogleDriveBackup...');
     driveBackup = new GoogleDriveBackup();
+    console.log('GoogleDriveBackup initialized:', driveBackup);
+
+    // Make it globally accessible for debugging
+    window.driveBackup = driveBackup;
+    console.log('You can test with: window.driveBackup.signIn()');
 });
 
 /*
