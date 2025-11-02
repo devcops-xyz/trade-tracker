@@ -34,6 +34,92 @@ header h1 {
     opacity: 0.9;
 }
 
+/* Google Drive Backup Controls */
+.backup-controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+#signedInControls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-email {
+    color: #4CAF50;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.btn-backup, .btn-backup-secondary {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-backup {
+    background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
+    color: white;
+    border: 1px solid #4d4d7d;
+}
+
+.btn-backup:hover {
+    background: linear-gradient(135deg, #3d4571 0%, #4d3d71 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.btn-backup-secondary {
+    background: #2a2a3e;
+    color: #b0b0b0;
+    border: 1px solid #3a3a4e;
+}
+
+.btn-backup-secondary:hover {
+    background: #3a3a4e;
+    color: #e0e0e0;
+}
+
+.backup-status {
+    margin-top: 10px;
+    padding: 8px 15px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-height: 20px;
+}
+
+.backup-status.success {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.backup-status.error {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.backup-status.info {
+    background: rgba(33, 150, 243, 0.2);
+    color: #2196F3;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
 section {
     background: #1a1a2e;
     border-radius: 15px;
