@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متتبع التجارة - Trade Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 متتبع التجارة</h1>
+            <p class="subtitle">تتبع الصادرات والواردات وحساب الأرباح</p>
+        </header>
+
+        <!-- Dashboard Section -->
+        <section class="dashboard">
+            <h2>لوحة التحكم</h2>
+            <div class="profit-cards">
+                <div class="card daily">
+                    <div class="card-header">الربح اليومي</div>
+                    <div class="card-value" id="dailyProfit">0.00</div>
+                    <div class="card-footer">
+                        <span>واردات: <span id="dailyExports">0.00</span></span>
+                        <span>صادرات: <span id="dailyImports">0.00</span></span>
+                    </div>
+                </div>
+
+                <div class="card weekly">
+                    <div class="card-header">الربح الأسبوعي</div>
+                    <div class="card-value" id="weeklyProfit">0.00</div>
+                    <div class="card-footer">
+                        <span>واردات: <span id="weeklyExports">0.00</span></span>
+                        <span>صادرات: <span id="weeklyImports">0.00</span></span>
+                    </div>
+                </div>
+
+                <div class="card monthly">
+                    <div class="card-header">الربح الشهري</div>
+                    <div class="card-value" id="monthlyProfit">0.00</div>
+                    <div class="card-footer">
+                        <span>واردات: <span id="monthlyExports">0.00</span></span>
+                        <span>صادرات: <span id="monthlyImports">0.00</span></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Add Transaction Section -->
+        <section class="add-transaction">
+            <h2>إضافة معاملة جديدة</h2>
+            <form id="transactionForm">
+                <div class="form-group">
+                    <label>نوع المعاملة</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="type" value="export" checked>
+                            <span class="radio-custom export-radio">واردات</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="type" value="import">
+                            <span class="radio-custom import-radio">صادرات</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="amount">المبلغ</label>
+                    <input type="number" id="amount" step="0.01" min="0" required placeholder="أدخل المبلغ">
+                </div>
+
+                <div class="form-group">
+                    <label for="description">الوصف</label>
+                    <input type="text" id="description" required placeholder="وصف المعاملة">
+                </div>
+
+                <button type="submit" class="btn-submit">➕ إضافة معاملة</button>
+            </form>
+        </section>
+
+        <!-- Transactions List Section -->
+        <section class="transactions-list">
+            <div class="section-header">
+                <h2>المعاملات</h2>
+                <button class="btn-clear" id="clearAllBtn">🗑️ حذف الكل</button>
+            </div>
+            <div id="transactionsList"></div>
+            <div id="emptyState" class="empty-state">
+                <p>لا توجد معاملات بعد</p>
+                <p class="empty-subtitle">ابدأ بإضافة معاملة جديدة أعلاه</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
