@@ -53,20 +53,41 @@ class GoogleDriveBackup {
     }
 
     signIn() {
-        // Using Google Identity Services
-        const client = google.accounts.oauth2.initTokenClient({
-            client_id: this.CLIENT_ID,
-            scope: this.SCOPES,
-            callback: (response) => {
-                if (response.access_token) {
-                    this.accessToken = response.access_token;
-                    localStorage.setItem('gdrive_token', this.accessToken);
-                    this.getUserInfo();
-                    this.showStatus('تم تسجيل الدخول بنجاح ✓', 'success');
-                }
-            },
-        });
-        client.requestAccessToken();
+        // Check if Google API is loaded
+        if (typeof google === 'undefined' || !google.accounts) {
+            this.showStatus('جاري تحميل Google API...', 'info');
+            console.error('Google API not loaded yet');
+
+            // Retry after a delay
+            setTimeout(() => this.signIn(), 1000);
+            return;
+        }
+
+        try {
+            // Using Google Identity Services
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: this.CLIENT_ID,
+                scope: this.SCOPES,
+                callback: (response) => {
+                    if (response.error) {
+                        console.error('OAuth error:', response);
+                        this.showStatus(`خطأ: ${response.error}`, 'error');
+                        return;
+                    }
+
+                    if (response.access_token) {
+                        this.accessToken = response.access_token;
+                        localStorage.setItem('gdrive_token', this.accessToken);
+                        this.getUserInfo();
+                        this.showStatus('تم تسجيل الدخول بنجاح ✓', 'success');
+                    }
+                },
+            });
+            client.requestAccessToken();
+        } catch (error) {
+            console.error('Sign-in error:', error);
+            this.showStatus('خطأ في تسجيل الدخول', 'error');
+        }
     }
 
     async getUserInfo() {
