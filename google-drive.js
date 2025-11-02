@@ -316,6 +316,83 @@ class GoogleDriveBackup {
             statusEl.className = 'backup-status';
         }, 5000);
     }
+
+    // Auto-backup: Only once per day
+    shouldAutoBackup() {
+        if (!this.accessToken) {
+            return false; // Not signed in
+        }
+
+        const lastBackup = localStorage.getItem('last_backup_date');
+        const today = new Date().toDateString();
+
+        if (lastBackup === today) {
+            return false; // Already backed up today
+        }
+
+        return true;
+    }
+
+    async autoBackup() {
+        if (!this.shouldAutoBackup()) {
+            console.log('Auto-backup skipped: Already backed up today or not signed in');
+            return;
+        }
+
+        try {
+            console.log('Auto-backup triggered...');
+
+            // Get current data from localStorage
+            const transactions = localStorage.getItem('transactions') || '[]';
+            const backupData = {
+                timestamp: new Date().toISOString(),
+                version: '1.0',
+                data: {
+                    transactions: JSON.parse(transactions)
+                }
+            };
+
+            // Check if backup file already exists
+            await this.findBackupFile();
+
+            const metadata = {
+                name: this.BACKUP_FILENAME,
+                mimeType: 'application/json'
+            };
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' }));
+
+            const url = this.fileId
+                ? `https://www.googleapis.com/upload/drive/v3/files/${this.fileId}?uploadType=multipart`
+                : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+            const method = this.fileId ? 'PATCH' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    Authorization: `Bearer ${this.accessToken}`
+                },
+                body: form
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                this.fileId = result.id;
+
+                // Save today's date as last backup
+                localStorage.setItem('last_backup_date', new Date().toDateString());
+
+                console.log('✓ Auto-backup completed successfully');
+            } else {
+                console.error('Auto-backup failed:', response.status);
+            }
+        } catch (error) {
+            console.error('Auto-backup error:', error);
+        }
+    }
 }
 
 // Initialize Google Drive backup

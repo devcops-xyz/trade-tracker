@@ -60,6 +60,11 @@ class TradeTracker {
 
         // Show success message
         this.showNotification('تمت إضافة المعاملة بنجاح ✓');
+
+        // Trigger auto-backup to Google Drive (once per day)
+        if (window.driveBackup) {
+            window.driveBackup.autoBackup();
+        }
     }
 
     deleteTransaction(id) {
