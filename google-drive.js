@@ -1,16 +1,28 @@
 // Google Drive Integration for Backup/Restore
 class GoogleDriveBackup {
     constructor() {
-        // You'll need to replace this with your own Google Cloud Project Client ID
-        // Instructions at the bottom of this file
-        this.CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
-        this.API_KEY = 'YOUR_API_KEY_HERE';
+        // Get Client ID from config
+        this.CLIENT_ID = window.APP_CONFIG?.GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
         this.SCOPES = 'https://www.googleapis.com/auth/drive.file';
         this.BACKUP_FILENAME = 'trade-tracker-backup.json';
         this.accessToken = null;
         this.fileId = null;
 
+        // Check if configured
+        if (this.CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
+            console.warn('Google Drive not configured. Please update config.js with your Client ID.');
+            this.hideBackupControls();
+            return;
+        }
+
         this.init();
+    }
+
+    hideBackupControls() {
+        const backupControls = document.querySelector('.backup-controls');
+        if (backupControls) {
+            backupControls.style.display = 'none';
+        }
     }
 
     init() {
