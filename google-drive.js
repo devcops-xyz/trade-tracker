@@ -218,6 +218,9 @@ class GoogleDriveBackup {
                 this.fileId = result.id;
                 const date = new Date().toLocaleString('ar-EG');
                 this.showStatus(`✓ تم النسخ الاحتياطي بنجاح (${date})`, 'success');
+            } else if (response.status === 401) {
+                this.showStatus('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً', 'error');
+                this.signOut();
             } else {
                 throw new Error('Backup failed');
             }
@@ -259,6 +262,11 @@ class GoogleDriveBackup {
             );
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً', 'error');
+                    this.signOut();
+                    return;
+                }
                 throw new Error('Failed to download backup');
             }
 
@@ -386,6 +394,10 @@ class GoogleDriveBackup {
                 localStorage.setItem('last_backup_date', new Date().toDateString());
 
                 console.log('✓ Auto-backup completed successfully');
+            } else if (response.status === 401) {
+                // Token expired - clear it so user knows to sign in again
+                console.log('Auto-backup failed: Token expired. Please sign in again.');
+                this.signOut();
             } else {
                 console.error('Auto-backup failed:', response.status);
             }
