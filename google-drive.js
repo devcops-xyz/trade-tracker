@@ -26,10 +26,8 @@ class GoogleDriveBackup {
     }
 
     init() {
-        // Wait for Google API to load
-        window.addEventListener('load', () => {
-            this.setupEventListeners();
-        });
+        // Setup event listeners immediately (page is already loaded when this runs)
+        this.setupEventListeners();
     }
 
     setupEventListeners() {
