@@ -1,8 +1,7 @@
-// Configuration file - Just update CLIENT_ID once and you're done!
+// Configuration file - Google Drive integration configured!
 const CONFIG = {
-    // TODO: Replace with your Google OAuth Client ID
-    // Get it from: https://console.cloud.google.com/apis/credentials
-    GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com',
+    // Google OAuth Client ID
+    GOOGLE_CLIENT_ID: '441953616159-sdognfjd3p2qih8ro0em7lm9vnjiuho3.apps.googleusercontent.com',
 
     // No other configuration needed!
     // The app will automatically work once deployed with the Client ID above
