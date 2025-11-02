@@ -25,19 +25,6 @@ class TradeTracker {
             }
         });
 
-        // Local export/import
-        const exportBtn = document.getElementById('exportBtn');
-        const importBtn = document.getElementById('importBtn');
-        const importFile = document.getElementById('importFile');
-
-        exportBtn?.addEventListener('click', () => this.exportData());
-        importBtn?.addEventListener('click', () => importFile.click());
-        importFile?.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                this.importData(e.target.files[0]);
-                e.target.value = ''; // Reset input
-            }
-        });
     }
 
     addTransaction() {
@@ -233,58 +220,6 @@ class TradeTracker {
         }, 3000);
     }
 
-    // Export data to JSON file
-    exportData() {
-        const exportData = {
-            timestamp: new Date().toISOString(),
-            version: '1.0',
-            data: {
-                transactions: this.transactions
-            }
-        };
-
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `trade-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        this.showNotification('✓ تم تصدير البيانات');
-    }
-
-    // Import data from JSON file
-    importData(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const importedData = JSON.parse(e.target.result);
-
-                if (importedData.data && importedData.data.transactions) {
-                    if (!confirm(`هل تريد استيراد ${importedData.data.transactions.length} معاملة؟ سيتم استبدال البيانات الحالية.`)) {
-                        return;
-                    }
-
-                    this.transactions = importedData.data.transactions;
-                    this.saveTransactions();
-                    this.renderTransactions();
-                    this.updateDashboard();
-
-                    const date = new Date(importedData.timestamp).toLocaleDateString('ar-EG');
-                    this.showNotification(`✓ تم استيراد البيانات (${date})`);
-                } else {
-                    throw new Error('Invalid format');
-                }
-            } catch (error) {
-                alert('خطأ: الملف غير صحيح');
-                console.error('Import error:', error);
-            }
-        };
-        reader.readAsText(file);
-    }
 }
 
 // Add animations

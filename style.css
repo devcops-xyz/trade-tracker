@@ -34,40 +34,14 @@ header h1 {
     opacity: 0.9;
 }
 
-/* Google Drive Backup Controls */
+/* Backup Controls */
 .backup-controls {
     margin-top: 20px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-}
-
-.local-backup-controls {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
     justify-content: center;
 }
 
-#signedInControls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
-}
-
-.user-email {
-    color: #4CAF50;
-    font-size: 0.9rem;
-    padding: 8px 12px;
-    background: rgba(76, 175, 80, 0.1);
-    border-radius: 6px;
-    border: 1px solid rgba(76, 175, 80, 0.3);
-}
-
-.btn-backup, .btn-backup-secondary {
+.btn-backup {
     padding: 10px 20px;
     border: none;
     border-radius: 6px;
@@ -75,9 +49,6 @@ header h1 {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
-}
-
-.btn-backup {
     background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
     color: white;
     border: 1px solid #4d4d7d;
@@ -89,24 +60,160 @@ header h1 {
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
-.btn-backup-secondary {
-    background: #2a2a3e;
-    color: #b0b0b0;
-    border: 1px solid #3a3a4e;
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
 }
 
-.btn-backup-secondary:hover {
-    background: #3a3a4e;
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #1a1a2e;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    border: 1px solid #2a2a3e;
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #2a2a3e;
+}
+
+.modal-header h2 {
+    margin: 0;
+    color: #e0e0e0;
+    font-size: 1.5rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #b0b0b0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: color 0.3s;
+}
+
+.modal-close:hover {
     color: #e0e0e0;
 }
 
-.backup-status {
-    margin-top: 10px;
+.modal-body {
+    padding: 25px;
+}
+
+.backup-section {
+    margin-bottom: 20px;
+}
+
+.backup-section h3 {
+    color: #e0e0e0;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.backup-description {
+    color: #b0b0b0;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.user-info {
+    margin-bottom: 15px;
+}
+
+.user-email-badge {
+    display: inline-block;
+    color: #4CAF50;
+    font-size: 0.9rem;
     padding: 8px 15px;
-    border-radius: 6px;
+    background: rgba(76, 175, 80, 0.15);
+    border-radius: 20px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.backup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-modal-primary,
+.btn-modal-secondary,
+.btn-modal-danger {
+    width: 100%;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-modal-primary {
+    background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
+    color: white;
+    border: 1px solid #4d4d7d;
+}
+
+.btn-modal-primary:hover {
+    background: linear-gradient(135deg, #3d4571 0%, #4d3d71 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.btn-modal-secondary {
+    background: #2a2a3e;
+    color: #e0e0e0;
+    border: 1px solid #3a3a4e;
+}
+
+.btn-modal-secondary:hover {
+    background: #3a3a4e;
+    transform: translateY(-2px);
+}
+
+.btn-modal-danger {
+    background: #3a2a2e;
+    color: #f48fb1;
+    border: 1px solid #4a3a3e;
+}
+
+.btn-modal-danger:hover {
+    background: #4a3a3e;
+    transform: translateY(-2px);
+}
+
+.backup-status {
+    margin-top: 15px;
+    padding: 12px 15px;
+    border-radius: 8px;
     font-size: 0.9rem;
     font-weight: 600;
-    min-height: 20px;
+    text-align: center;
 }
 
 .backup-status.success {
@@ -125,6 +232,22 @@ header h1 {
     background: rgba(33, 150, 243, 0.2);
     color: #2196F3;
     border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 section {

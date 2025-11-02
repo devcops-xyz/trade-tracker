@@ -14,25 +14,9 @@
             <h1>📊 متتبع التجارة</h1>
             <p class="subtitle">تتبع الصادرات والواردات وحساب الأرباح</p>
 
-            <!-- Backup/Restore Controls -->
+            <!-- Backup Settings Button -->
             <div class="backup-controls">
-                <!-- Google Drive Backup -->
-                <button id="signInBtn" class="btn-backup">🔐 تسجيل الدخول بجوجل</button>
-                <div id="signedInControls" style="display: none;">
-                    <span id="userEmail" class="user-email"></span>
-                    <button id="backupBtn" class="btn-backup">☁️ نسخ احتياطي</button>
-                    <button id="restoreBtn" class="btn-backup">📥 استعادة</button>
-                    <button id="signOutBtn" class="btn-backup-secondary">تسجيل الخروج</button>
-                </div>
-
-                <!-- Local Export/Import (Always available) -->
-                <div class="local-backup-controls">
-                    <button id="exportBtn" class="btn-backup-secondary">💾 تصدير ملف</button>
-                    <button id="importBtn" class="btn-backup-secondary">📂 استيراد ملف</button>
-                    <input type="file" id="importFile" accept=".json" style="display: none;">
-                </div>
-
-                <div id="backupStatus" class="backup-status"></div>
+                <button id="openBackupSettings" class="btn-backup">⚙️ إعدادات النسخ الاحتياطي</button>
             </div>
         </header>
 
@@ -113,6 +97,43 @@
                 <p class="empty-subtitle">ابدأ بإضافة معاملة جديدة أعلاه</p>
             </div>
         </section>
+    </div>
+
+    <!-- Backup Settings Modal -->
+    <div id="backupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ إعدادات النسخ الاحتياطي</h2>
+                <button class="modal-close" id="closeBackupModal">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Google Drive Section -->
+                <div class="backup-section">
+                    <h3>☁️ Google Drive</h3>
+                    <p class="backup-description">احفظ بياناتك تلقائياً على Google Drive الخاص بك</p>
+
+                    <!-- Not Signed In -->
+                    <div id="signInSection">
+                        <button id="signInBtn" class="btn-modal-primary">🔐 تسجيل الدخول بجوجل</button>
+                    </div>
+
+                    <!-- Signed In -->
+                    <div id="signedInSection" style="display: none;">
+                        <div class="user-info">
+                            <span class="user-email-badge" id="userEmail"></span>
+                        </div>
+                        <div class="backup-actions">
+                            <button id="backupBtn" class="btn-modal-primary">☁️ نسخ احتياطي الآن</button>
+                            <button id="restoreBtn" class="btn-modal-secondary">📥 استعادة من Drive</button>
+                            <button id="signOutBtn" class="btn-modal-danger">تسجيل الخروج</button>
+                        </div>
+                    </div>
+
+                    <div id="backupStatus" class="backup-status"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="google-drive.js"></script>

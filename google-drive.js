@@ -34,6 +34,27 @@ class GoogleDriveBackup {
         console.log('Setting up Google Drive event listeners...');
         console.log('Client ID:', this.CLIENT_ID);
 
+        // Modal controls
+        const openModalBtn = document.getElementById('openBackupSettings');
+        const closeModalBtn = document.getElementById('closeBackupModal');
+        const modal = document.getElementById('backupModal');
+
+        openModalBtn?.addEventListener('click', () => {
+            modal.classList.add('active');
+        });
+
+        closeModalBtn?.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+
+        // Close on outside click
+        modal?.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+
+        // Google Drive controls
         const signInBtn = document.getElementById('signInBtn');
         const signOutBtn = document.getElementById('signOutBtn');
         const backupBtn = document.getElementById('backupBtn');
@@ -130,14 +151,21 @@ class GoogleDriveBackup {
     }
 
     updateUISignedIn(email) {
-        document.getElementById('signInBtn').style.display = 'none';
-        document.getElementById('signedInControls').style.display = 'flex';
-        document.getElementById('userEmail').textContent = email;
+        const signInSection = document.getElementById('signInSection');
+        const signedInSection = document.getElementById('signedInSection');
+        const userEmail = document.getElementById('userEmail');
+
+        if (signInSection) signInSection.style.display = 'none';
+        if (signedInSection) signedInSection.style.display = 'block';
+        if (userEmail) userEmail.textContent = email;
     }
 
     updateUISignedOut() {
-        document.getElementById('signInBtn').style.display = 'inline-block';
-        document.getElementById('signedInControls').style.display = 'none';
+        const signInSection = document.getElementById('signInSection');
+        const signedInSection = document.getElementById('signedInSection');
+
+        if (signInSection) signInSection.style.display = 'block';
+        if (signedInSection) signedInSection.style.display = 'none';
     }
 
     async backup() {
