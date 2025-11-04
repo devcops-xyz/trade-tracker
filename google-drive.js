@@ -808,7 +808,7 @@ class GoogleDriveBackup {
                     if (response.access_token) {
                         this.accessToken = response.access_token;
                         localStorage.setItem('gdrive_token', this.accessToken);
-                        this.getUserInfo();
+                        this.getUserInfo(true); // Pass true to indicate fresh sign-in
                         this.showStatus('تم تسجيل الدخول بنجاح ✓', 'success');
 
                         // Close settings modal if open
@@ -844,17 +844,36 @@ class GoogleDriveBackup {
         }
     }
 
-    async getUserInfo() {
+    async getUserInfo(isFreshSignIn = false) {
         try {
             const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
                 headers: { Authorization: `Bearer ${this.accessToken}` }
             });
 
             if (response.status === 401) {
-                // Token expired, sign out
-                console.log('Token expired, signing out...');
-                this.signOut();
-                return;
+                // Only sign out if this is NOT a fresh sign-in
+                // Fresh sign-ins should never have expired tokens
+                if (!isFreshSignIn) {
+                    console.log('Token expired, signing out...');
+                    this.signOut();
+                    return;
+                } else {
+                    // Fresh sign-in with 401 is unexpected, log but don't sign out yet
+                    console.error('Fresh sign-in returned 401 - token might not be ready yet');
+                    // Retry once after a short delay
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    const retryResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                        headers: { Authorization: `Bearer ${this.accessToken}` }
+                    });
+                    if (!retryResponse.ok) {
+                        throw new Error(`Retry failed with status: ${retryResponse.status}`);
+                    }
+                    const data = await retryResponse.json();
+                    this.currentUserEmail = data.email;
+                    localStorage.setItem('gdrive_email', data.email);
+                    this.updateUISignedIn(data.email);
+                    return;
+                }
             }
 
             if (!response.ok) {
@@ -867,6 +886,11 @@ class GoogleDriveBackup {
             this.updateUISignedIn(data.email);
         } catch (error) {
             console.error('Error getting user info:', error);
+            // Only sign out on error if not a fresh sign-in
+            if (!isFreshSignIn) {
+                console.log('Error during saved token validation, signing out...');
+                this.signOut();
+            }
         }
     }
 
