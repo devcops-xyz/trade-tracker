@@ -530,11 +530,11 @@ class TradeTracker {
 
         const exportsHTML = currencies.map(currency => {
             return `${byCurrency[currency].exports.toFixed(2)} ${currency}`;
-        }).join('<br>');
+        }).join(' • ');
 
         const importsHTML = currencies.map(currency => {
             return `${byCurrency[currency].imports.toFixed(2)} ${currency}`;
-        }).join('<br>');
+        }).join(' • ');
 
         profitElement.innerHTML = profitHTML;
         exportsElement.innerHTML = exportsHTML;
