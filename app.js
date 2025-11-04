@@ -444,17 +444,13 @@ class TradeTracker {
             const commentsSection = this.renderComments(transaction);
 
             return `
-                <div class="transaction-item ${transaction.type}">
-                    <div class="transaction-info">
-                        <div class="transaction-type">
-                            ${transaction.type === 'export' ? '📤 واردات' : '📥 صادرات'}
-                        </div>
-                        <div class="transaction-description">${transaction.description}</div>
-                        <div class="transaction-date">${formattedDate}</div>
-                        ${commentsSection}
-                    </div>
-                    <div class="transaction-amount">${currency} ${transaction.amount.toFixed(2)}</div>
+                <div class="transaction-line ${transaction.type}">
+                    <span class="transaction-type">${transaction.type === 'export' ? '📤' : '📥'}</span>
+                    <span class="transaction-description">${transaction.description}</span>
+                    <span class="transaction-date">${formattedDate}</span>
+                    <span class="transaction-amount">${currency} ${transaction.amount.toFixed(2)}</span>
                     ${deleteButton}
+                    ${commentsSection}
                 </div>
             `;
         }).join('');
