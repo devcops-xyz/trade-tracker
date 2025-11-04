@@ -1355,11 +1355,16 @@ class GoogleDriveBackup {
         const select = document.getElementById('currency');
         if (!select) return;
 
-        // Keep the first placeholder option and add currencies
-        select.innerHTML = '<option value="">اختر العملة</option>' +
-            this.workspaceCurrencies.map(currency =>
-                `<option value="${currency.code}">${currency.code} - ${currency.name}</option>`
-            ).join('');
+        // Add currencies without placeholder - default will be selected
+        select.innerHTML = this.workspaceCurrencies.map(currency =>
+            `<option value="${currency.code}">${currency.code} - ${currency.name}</option>`
+        ).join('');
+
+        // Set default currency
+        if (this.defaultCurrency) {
+            select.value = this.defaultCurrency;
+            this.setDefaultCurrencyInForm();
+        }
     }
 
     addCurrency() {

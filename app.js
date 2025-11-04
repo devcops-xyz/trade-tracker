@@ -207,13 +207,18 @@ class TradeTracker {
     addTransaction() {
         const type = document.querySelector('input[name="type"]:checked').value;
         const amount = parseFloat(document.getElementById('amount').value);
-        const currency = document.getElementById('currency').value;
+        let currency = document.getElementById('currency').value;
         const description = document.getElementById('description').value;
         const transactionDate = document.getElementById('transactionDate').value;
 
         if (!amount || amount <= 0) {
             alert('يرجى إدخال مبلغ صحيح');
             return;
+        }
+
+        // Use default currency if none selected
+        if (!currency && window.driveBackup?.defaultCurrency) {
+            currency = window.driveBackup.defaultCurrency;
         }
 
         if (!currency) {
