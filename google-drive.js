@@ -13,6 +13,7 @@ class GoogleDriveBackup {
         this.workspaceMembers = [];
         this.activityLog = [];
         this.currentUserEmail = null;
+        this.worldCurrencies = this.getWorldCurrencies();
 
         // Check if configured
         if (this.CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
@@ -572,6 +573,7 @@ class GoogleDriveBackup {
         openWorkspaceSettingsBtn?.addEventListener('click', () => {
             workspaceSettingsModal.classList.add('active');
             this.loadCurrencies();
+            this.displayWorldCurrencies();
         });
 
         closeWorkspaceSettingsBtn?.addEventListener('click', () => {
@@ -585,9 +587,9 @@ class GoogleDriveBackup {
         });
 
         // Currency management
-        const addCurrencyBtn = document.getElementById('addCurrencyBtn');
-        addCurrencyBtn?.addEventListener('click', () => {
-            this.addCurrency();
+        const currencySearchInput = document.getElementById('currencySearch');
+        currencySearchInput?.addEventListener('input', (e) => {
+            this.filterWorldCurrencies(e.target.value);
         });
 
         // Currency selector button
@@ -1693,6 +1695,241 @@ class GoogleDriveBackup {
         if (diffDays < 7) return `منذ ${diffDays} يوم`;
 
         return date.toLocaleDateString('ar-EG');
+    }
+
+    // World Currencies Management
+
+    getWorldCurrencies() {
+        return [
+            { code: 'AED', name: 'درهم إماراتي' },
+            { code: 'AFN', name: 'أفغاني' },
+            { code: 'ALL', name: 'ليك ألباني' },
+            { code: 'AMD', name: 'درام أرميني' },
+            { code: 'ANG', name: 'غيلدر أنتيلي هولندي' },
+            { code: 'AOA', name: 'كوانزا أنغولي' },
+            { code: 'ARS', name: 'بيزو أرجنتيني' },
+            { code: 'AUD', name: 'دولار أسترالي' },
+            { code: 'AWG', name: 'فلورن أروبي' },
+            { code: 'AZN', name: 'مانات أذربيجاني' },
+            { code: 'BAM', name: 'مارك بوسني' },
+            { code: 'BBD', name: 'دولار بربادوسي' },
+            { code: 'BDT', name: 'تاكا بنغلاديشي' },
+            { code: 'BGN', name: 'ليف بلغاري' },
+            { code: 'BHD', name: 'دينار بحريني' },
+            { code: 'BIF', name: 'فرنك بوروندي' },
+            { code: 'BMD', name: 'دولار برمودي' },
+            { code: 'BND', name: 'دولار بروناي' },
+            { code: 'BOB', name: 'بوليفيانو بوليفي' },
+            { code: 'BRL', name: 'ريال برازيلي' },
+            { code: 'BSD', name: 'دولار باهامي' },
+            { code: 'BTN', name: 'نغولتروم بوتاني' },
+            { code: 'BWP', name: 'بولا بوتسواني' },
+            { code: 'BYN', name: 'روبل بيلاروسي' },
+            { code: 'BZD', name: 'دولار بليزي' },
+            { code: 'CAD', name: 'دولار كندي' },
+            { code: 'CDF', name: 'فرنك كونغولي' },
+            { code: 'CHF', name: 'فرنك سويسري' },
+            { code: 'CLP', name: 'بيزو تشيلي' },
+            { code: 'CNY', name: 'يوان صيني' },
+            { code: 'COP', name: 'بيزو كولومبي' },
+            { code: 'CRC', name: 'كولون كوستاريكي' },
+            { code: 'CUP', name: 'بيزو كوبي' },
+            { code: 'CVE', name: 'إسكودو الرأس الأخضر' },
+            { code: 'CZK', name: 'كرونة تشيكية' },
+            { code: 'DJF', name: 'فرنك جيبوتي' },
+            { code: 'DKK', name: 'كرونة دنماركية' },
+            { code: 'DOP', name: 'بيزو دومينيكاني' },
+            { code: 'DZD', name: 'دينار جزائري' },
+            { code: 'EGP', name: 'جنيه مصري' },
+            { code: 'ERN', name: 'ناكفا إريتري' },
+            { code: 'ETB', name: 'بير إثيوبي' },
+            { code: 'EUR', name: 'يورو' },
+            { code: 'FJD', name: 'دولار فيجي' },
+            { code: 'FKP', name: 'جنيه جزر فوكلاند' },
+            { code: 'FOK', name: 'كرونة جزر فارو' },
+            { code: 'GBP', name: 'جنيه إسترليني' },
+            { code: 'GEL', name: 'لاري جورجي' },
+            { code: 'GGP', name: 'جنيه غيرنزي' },
+            { code: 'GHS', name: 'سيدي غاني' },
+            { code: 'GIP', name: 'جنيه جبل طارق' },
+            { code: 'GMD', name: 'دالاسي غامبي' },
+            { code: 'GNF', name: 'فرنك غيني' },
+            { code: 'GTQ', name: 'كتزال غواتيمالي' },
+            { code: 'GYD', name: 'دولار غياني' },
+            { code: 'HKD', name: 'دولار هونغ كونغ' },
+            { code: 'HNL', name: 'ليمبيرا هندوراسي' },
+            { code: 'HRK', name: 'كونا كرواتية' },
+            { code: 'HTG', name: 'غورد هايتي' },
+            { code: 'HUF', name: 'فورنت مجري' },
+            { code: 'IDR', name: 'روبية إندونيسية' },
+            { code: 'ILS', name: 'شيكل إسرائيلي' },
+            { code: 'IMP', name: 'جنيه مانكس' },
+            { code: 'INR', name: 'روبية هندية' },
+            { code: 'IQD', name: 'دينار عراقي' },
+            { code: 'IRR', name: 'ريال إيراني' },
+            { code: 'ISK', name: 'كرونة آيسلندية' },
+            { code: 'JEP', name: 'جنيه جيرزي' },
+            { code: 'JMD', name: 'دولار جامايكي' },
+            { code: 'JOD', name: 'دينار أردني' },
+            { code: 'JPY', name: 'ين ياباني' },
+            { code: 'KES', name: 'شلن كيني' },
+            { code: 'KGS', name: 'سوم قرغيزستاني' },
+            { code: 'KHR', name: 'ريال كمبودي' },
+            { code: 'KID', name: 'دولار كيريباتي' },
+            { code: 'KMF', name: 'فرنك قمري' },
+            { code: 'KRW', name: 'وون كوري جنوبي' },
+            { code: 'KWD', name: 'دينار كويتي' },
+            { code: 'KYD', name: 'دولار جزر كايمان' },
+            { code: 'KZT', name: 'تنغي كازاخستاني' },
+            { code: 'LAK', name: 'كيب لاوسي' },
+            { code: 'LBP', name: 'ليرة لبنانية' },
+            { code: 'LKR', name: 'روبية سريلانكية' },
+            { code: 'LRD', name: 'دولار ليبيري' },
+            { code: 'LSL', name: 'لوتي ليسوتو' },
+            { code: 'LYD', name: 'دينار ليبي' },
+            { code: 'MAD', name: 'درهم مغربي' },
+            { code: 'MDL', name: 'ليو مولدوفي' },
+            { code: 'MGA', name: 'أرياري مدغشقري' },
+            { code: 'MKD', name: 'دينار مقدوني' },
+            { code: 'MMK', name: 'كيات ميانماري' },
+            { code: 'MNT', name: 'توغروغ منغولي' },
+            { code: 'MOP', name: 'باتاكا ماكاوي' },
+            { code: 'MRU', name: 'أوقية موريتانية' },
+            { code: 'MUR', name: 'روبية موريشيوسية' },
+            { code: 'MVR', name: 'روفيه مالديفي' },
+            { code: 'MWK', name: 'كواشا ملاوي' },
+            { code: 'MXN', name: 'بيزو مكسيكي' },
+            { code: 'MYR', name: 'رينغيت ماليزي' },
+            { code: 'MZN', name: 'ميتيكال موزمبيقي' },
+            { code: 'NAD', name: 'دولار ناميبي' },
+            { code: 'NGN', name: 'نايرا نيجيري' },
+            { code: 'NIO', name: 'كوردوبا نيكاراغوي' },
+            { code: 'NOK', name: 'كرونة نرويجية' },
+            { code: 'NPR', name: 'روبية نيبالية' },
+            { code: 'NZD', name: 'دولار نيوزيلندي' },
+            { code: 'OMR', name: 'ريال عماني' },
+            { code: 'PAB', name: 'بالبوا بنمي' },
+            { code: 'PEN', name: 'سول بيروفي' },
+            { code: 'PGK', name: 'كينا بابوا غينيا الجديدة' },
+            { code: 'PHP', name: 'بيزو فلبيني' },
+            { code: 'PKR', name: 'روبية باكستانية' },
+            { code: 'PLN', name: 'زلوتي بولندي' },
+            { code: 'PYG', name: 'غواراني باراغواي' },
+            { code: 'QAR', name: 'ريال قطري' },
+            { code: 'RON', name: 'ليو روماني' },
+            { code: 'RSD', name: 'دينار صربي' },
+            { code: 'RUB', name: 'روبل روسي' },
+            { code: 'RWF', name: 'فرنك رواندي' },
+            { code: 'SAR', name: 'ريال سعودي' },
+            { code: 'SBD', name: 'دولار جزر سليمان' },
+            { code: 'SCR', name: 'روبية سيشيلية' },
+            { code: 'SDG', name: 'جنيه سوداني' },
+            { code: 'SEK', name: 'كرونة سويدية' },
+            { code: 'SGD', name: 'دولار سنغافوري' },
+            { code: 'SHP', name: 'جنيه سانت هيلينا' },
+            { code: 'SLE', name: 'ليون سيراليوني' },
+            { code: 'SLL', name: 'ليون سيراليوني قديم' },
+            { code: 'SOS', name: 'شلن صومالي' },
+            { code: 'SRD', name: 'دولار سورينامي' },
+            { code: 'SSP', name: 'جنيه جنوب سوداني' },
+            { code: 'STN', name: 'دوبرا ساو تومي' },
+            { code: 'SYP', name: 'ليرة سورية' },
+            { code: 'SZL', name: 'ليلانغيني سوازيلاندي' },
+            { code: 'THB', name: 'بات تايلاندي' },
+            { code: 'TJS', name: 'سوموني طاجيكي' },
+            { code: 'TMT', name: 'مانات تركماني' },
+            { code: 'TND', name: 'دينار تونسي' },
+            { code: 'TOP', name: 'بانغا تونغي' },
+            { code: 'TRY', name: 'ليرة تركية' },
+            { code: 'TTD', name: 'دولار ترينيداد وتوباغو' },
+            { code: 'TVD', name: 'دولار توفالو' },
+            { code: 'TWD', name: 'دولار تايواني' },
+            { code: 'TZS', name: 'شلن تنزاني' },
+            { code: 'UAH', name: 'هريفنا أوكراني' },
+            { code: 'UGX', name: 'شلن أوغندي' },
+            { code: 'USD', name: 'دولار أمريكي' },
+            { code: 'UYU', name: 'بيزو أوروغواي' },
+            { code: 'UZS', name: 'سوم أوزبكي' },
+            { code: 'VES', name: 'بوليفار فنزويلي' },
+            { code: 'VND', name: 'دونغ فيتنامي' },
+            { code: 'VUV', name: 'فاتو فانواتي' },
+            { code: 'WST', name: 'تالا ساموي' },
+            { code: 'XAF', name: 'فرنك وسط أفريقي' },
+            { code: 'XCD', name: 'دولار شرق كاريبي' },
+            { code: 'XDR', name: 'حقوق سحب خاصة' },
+            { code: 'XOF', name: 'فرنك غرب أفريقي' },
+            { code: 'XPF', name: 'فرنك باسيفيكي' },
+            { code: 'YER', name: 'ريال يمني' },
+            { code: 'ZAR', name: 'راند جنوب أفريقي' },
+            { code: 'ZMW', name: 'كواشا زامبي' },
+            { code: 'ZWL', name: 'دولار زيمبابوي' }
+        ];
+    }
+
+    displayWorldCurrencies(filter = '') {
+        const container = document.getElementById('worldCurrenciesList');
+        if (!container) return;
+
+        const filtered = filter ?
+            this.worldCurrencies.filter(c =>
+                c.code.toLowerCase().includes(filter.toLowerCase()) ||
+                c.name.toLowerCase().includes(filter.toLowerCase())
+            ) :
+            this.worldCurrencies;
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #808080;">لا توجد نتائج</p>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(currency => {
+            const isAdded = this.workspaceCurrencies.some(c => c.code === currency.code);
+            const addedClass = isAdded ? 'added' : '';
+            const buttonText = isAdded ? '✓' : '+';
+
+            return `
+                <div class="world-currency-item ${addedClass}" onclick="window.driveBackup.addWorldCurrency('${currency.code}', '${currency.name}')">
+                    <div class="world-currency-info">
+                        <div class="world-currency-code">${currency.code}</div>
+                        <div class="world-currency-name">${currency.name}</div>
+                    </div>
+                    <button class="btn-add-world-currency" ${isAdded ? 'disabled' : ''}>
+                        ${buttonText}
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    filterWorldCurrencies(searchTerm) {
+        this.displayWorldCurrencies(searchTerm);
+    }
+
+    addWorldCurrency(code, name) {
+        // Check if already added
+        if (this.workspaceCurrencies.some(c => c.code === code)) {
+            return;
+        }
+
+        this.workspaceCurrencies.push({ code, name });
+        localStorage.setItem('workspace_currencies', JSON.stringify(this.workspaceCurrencies));
+
+        // Update displays
+        this.displayCurrencies();
+        this.populateCurrencySelector();
+        this.displayWorldCurrencies();
+
+        // Update filter currencies dropdown
+        if (window.tracker) {
+            window.tracker.populateFilterCurrencies();
+        }
+
+        // Auto-backup to sync currencies
+        this.autoBackup();
+
+        if (window.tracker) {
+            window.tracker.showNotification(`✓ تمت إضافة ${code}`);
+        }
     }
 }
 
