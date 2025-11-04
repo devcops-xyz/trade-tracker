@@ -1520,3 +1520,295 @@ h2 {
         padding: 10px;
     }
 }
+
+/* Transactions Header & Controls */
+.transactions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.transactions-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+/* Search Box */
+.search-box {
+    position: relative;
+}
+
+.search-input {
+    padding: 10px 15px;
+    background: #0f0f23;
+    border: 2px solid #2a2a3e;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    min-width: 200px;
+    transition: border-color 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+/* Filter Button */
+.btn-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
+    color: white;
+    border: 1px solid #4d4d7d;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-filter:hover {
+    background: linear-gradient(135deg, #3d4571 0%, #4d3d71 100%);
+    transform: translateY(-2px);
+}
+
+.btn-filter.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+/* Sort Select */
+.sort-select {
+    padding: 10px 15px;
+    background: #0f0f23;
+    border: 2px solid #2a2a3e;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.sort-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Filter Panel */
+.filter-panel {
+    background: #0f0f23;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    animation: slideDown 0.3s ease;
+}
+
+.filter-group {
+    margin-bottom: 15px;
+}
+
+.filter-group label {
+    display: block;
+    color: #b0b0b0;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.filter-options {
+    display: flex;
+    gap: 20px;
+}
+
+.filter-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.filter-options input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 10px;
+    background: #1a1a2e;
+    border: 2px solid #2a2a3e;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+}
+
+.filter-range {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-input {
+    flex: 1;
+    padding: 10px;
+    background: #1a1a2e;
+    border: 2px solid #2a2a3e;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+}
+
+.filter-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-apply-filters,
+.btn-clear-filters {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-apply-filters {
+    background: #4CAF50;
+    color: white;
+}
+
+.btn-apply-filters:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.btn-clear-filters {
+    background: #2a2a3e;
+    color: #e0e0e0;
+}
+
+.btn-clear-filters:hover {
+    background: #3a3a4e;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+    padding: 15px;
+}
+
+.btn-page {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
+    color: white;
+    border: 1px solid #4d4d7d;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-page:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3d4571 0%, #4d3d71 100%);
+    transform: translateY(-2px);
+}
+
+.btn-page:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #b0b0b0;
+    font-size: 0.95rem;
+}
+
+/* Quick Add Floating Button */
+.quick-add-btn {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(76, 175, 80, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    z-index: 999;
+}
+
+.quick-add-btn:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 6px 25px rgba(76, 175, 80, 0.6);
+}
+
+.quick-add-btn:active {
+    transform: scale(0.95);
+}
+
+/* Mobile Responsive for new features */
+@media (max-width: 768px) {
+    .transactions-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .transactions-controls {
+        flex-direction: column;
+    }
+
+    .search-input {
+        width: 100%;
+        min-width: unset;
+    }
+
+    .btn-filter,
+    .sort-select {
+        width: 100%;
+    }
+
+    .filter-options {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .filter-range {
+        flex-direction: column;
+    }
+
+    .quick-add-btn {
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .quick-add-btn:hover {
+        transform: translateX(-50%) scale(1.1);
+    }
+}

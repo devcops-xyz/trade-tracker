@@ -191,14 +191,100 @@
 
         <!-- Transactions List Section -->
         <section class="transactions-list">
-            <h2>المعاملات</h2>
+            <div class="transactions-header">
+                <h2>المعاملات</h2>
+                <div class="transactions-controls">
+                    <!-- Search -->
+                    <div class="search-box">
+                        <input type="text" id="searchTransactions" placeholder="🔍 بحث..." class="search-input">
+                    </div>
+
+                    <!-- Filter Button -->
+                    <button id="filterBtn" class="btn-filter">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="4" y1="21" x2="4" y2="14"></line>
+                            <line x1="4" y1="10" x2="4" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="3"></line>
+                            <line x1="20" y1="21" x2="20" y2="16"></line>
+                            <line x1="20" y1="12" x2="20" y2="3"></line>
+                            <line x1="1" y1="14" x2="7" y2="14"></line>
+                            <line x1="9" y1="8" x2="15" y2="8"></line>
+                            <line x1="17" y1="16" x2="23" y2="16"></line>
+                        </svg>
+                        فلترة
+                    </button>
+
+                    <!-- Sort -->
+                    <select id="sortTransactions" class="sort-select">
+                        <option value="date-desc">الأحدث أولاً</option>
+                        <option value="date-asc">الأقدم أولاً</option>
+                        <option value="amount-desc">الأعلى مبلغاً</option>
+                        <option value="amount-asc">الأقل مبلغاً</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filter Panel (Hidden by default) -->
+            <div id="filterPanel" class="filter-panel" style="display: none;">
+                <div class="filter-group">
+                    <label>النوع:</label>
+                    <div class="filter-options">
+                        <label><input type="checkbox" id="filterExport" checked> واردات</label>
+                        <label><input type="checkbox" id="filterImport" checked> صادرات</label>
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>العملة:</label>
+                    <select id="filterCurrency" class="filter-select">
+                        <option value="">الكل</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>المبلغ:</label>
+                    <div class="filter-range">
+                        <input type="number" id="filterAmountMin" placeholder="من" class="filter-input">
+                        <span>-</span>
+                        <input type="number" id="filterAmountMax" placeholder="إلى" class="filter-input">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label>التاريخ:</label>
+                    <div class="filter-range">
+                        <input type="date" id="filterDateFrom" class="filter-input">
+                        <span>إلى</span>
+                        <input type="date" id="filterDateTo" class="filter-input">
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button id="applyFilters" class="btn-apply-filters">تطبيق</button>
+                    <button id="clearFilters" class="btn-clear-filters">مسح الفلاتر</button>
+                </div>
+            </div>
+
             <div id="transactionsList"></div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="pagination" style="display: none;">
+                <button id="prevPage" class="btn-page">السابق</button>
+                <span id="pageInfo" class="page-info">صفحة 1 من 1</span>
+                <button id="nextPage" class="btn-page">التالي</button>
+            </div>
+
             <div id="emptyState" class="empty-state">
                 <p>لا توجد معاملات بعد</p>
                 <p class="empty-subtitle">ابدأ بإضافة معاملة جديدة أعلاه</p>
             </div>
         </section>
     </div>
+
+    <!-- Quick Add Floating Button -->
+    <button id="quickAddBtn" class="quick-add-btn" title="إضافة معاملة سريعة">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+    </button>
 
     <!-- Backup Settings Modal -->
     <div id="backupModal" class="modal">

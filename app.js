@@ -2,15 +2,30 @@
 class TradeTracker {
     constructor() {
         this.transactions = this.loadTransactions();
+        this.filteredTransactions = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 15;
+        this.searchQuery = '';
+        this.filters = {
+            types: { export: true, import: true },
+            currency: '',
+            amountMin: '',
+            amountMax: '',
+            dateFrom: '',
+            dateTo: ''
+        };
+        this.sortBy = 'date-desc';
         this.init();
+        this.initSessionTimeout();
     }
 
     init() {
-        this.renderTransactions();
+        this.applyFiltersAndRender();
         this.updateDashboard();
         this.setupEventListeners();
         this.setDefaultDate();
         this.initCharts();
+        this.populateFilterCurrencies();
 
         // Load currencies when Drive backup is ready
         setTimeout(() => {
@@ -38,6 +53,101 @@ class TradeTracker {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.addTransaction();
+        });
+
+        // Search
+        const searchInput = document.getElementById('searchTransactions');
+        searchInput?.addEventListener('input', (e) => {
+            this.searchQuery = e.target.value.toLowerCase();
+            this.currentPage = 1;
+            this.applyFiltersAndRender();
+        });
+
+        // Filter button toggle
+        const filterBtn = document.getElementById('filterBtn');
+        const filterPanel = document.getElementById('filterPanel');
+        filterBtn?.addEventListener('click', () => {
+            if (filterPanel.style.display === 'none' || !filterPanel.style.display) {
+                filterPanel.style.display = 'block';
+            } else {
+                filterPanel.style.display = 'none';
+            }
+        });
+
+        // Apply filters
+        const applyFiltersBtn = document.getElementById('applyFilters');
+        applyFiltersBtn?.addEventListener('click', () => {
+            this.filters.types.export = document.getElementById('filterExport').checked;
+            this.filters.types.import = document.getElementById('filterImport').checked;
+            this.filters.currency = document.getElementById('filterCurrency').value;
+            this.filters.amountMin = document.getElementById('filterAmountMin').value;
+            this.filters.amountMax = document.getElementById('filterAmountMax').value;
+            this.filters.dateFrom = document.getElementById('filterDateFrom').value;
+            this.filters.dateTo = document.getElementById('filterDateTo').value;
+            this.currentPage = 1;
+            this.applyFiltersAndRender();
+        });
+
+        // Clear filters
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        clearFiltersBtn?.addEventListener('click', () => {
+            this.filters = {
+                types: { export: true, import: true },
+                currency: '',
+                amountMin: '',
+                amountMax: '',
+                dateFrom: '',
+                dateTo: ''
+            };
+            document.getElementById('filterExport').checked = true;
+            document.getElementById('filterImport').checked = true;
+            document.getElementById('filterCurrency').value = '';
+            document.getElementById('filterAmountMin').value = '';
+            document.getElementById('filterAmountMax').value = '';
+            document.getElementById('filterDateFrom').value = '';
+            document.getElementById('filterDateTo').value = '';
+            this.searchQuery = '';
+            document.getElementById('searchTransactions').value = '';
+            this.currentPage = 1;
+            this.applyFiltersAndRender();
+            this.showNotification('تم مسح جميع الفلاتر');
+        });
+
+        // Sort
+        const sortSelect = document.getElementById('sortTransactions');
+        sortSelect?.addEventListener('change', (e) => {
+            this.sortBy = e.target.value;
+            this.applyFiltersAndRender();
+        });
+
+        // Pagination
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        prevPageBtn?.addEventListener('click', () => {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.renderTransactions();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        nextPageBtn?.addEventListener('click', () => {
+            const totalPages = Math.ceil(this.filteredTransactions.length / this.itemsPerPage);
+            if (this.currentPage < totalPages) {
+                this.currentPage++;
+                this.renderTransactions();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        // Quick Add button
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        quickAddBtn?.addEventListener('click', () => {
+            const form = document.getElementById('transactionForm');
+            form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Focus on amount field
+            setTimeout(() => {
+                document.getElementById('amount')?.focus();
+            }, 500);
         });
     }
 
@@ -79,9 +189,10 @@ class TradeTracker {
 
         this.transactions.unshift(transaction);
         this.saveTransactions();
-        this.renderTransactions();
+        this.applyFiltersAndRender();
         this.updateDashboard();
         this.updateCharts();
+        this.populateFilterCurrencies();
 
         // Reset form
         document.getElementById('transactionForm').reset();
@@ -102,9 +213,10 @@ class TradeTracker {
         if (confirm('هل أنت متأكد من حذف هذه المعاملة؟')) {
             this.transactions = this.transactions.filter(t => t.id !== id);
             this.saveTransactions();
-            this.renderTransactions();
+            this.applyFiltersAndRender();
             this.updateDashboard();
             this.updateCharts();
+            this.populateFilterCurrencies();
             this.showNotification('تم حذف المعاملة');
 
             // Trigger auto-backup to Google Drive (once per day)
@@ -117,8 +229,9 @@ class TradeTracker {
     clearAllTransactions() {
         this.transactions = [];
         this.saveTransactions();
-        this.renderTransactions();
+        this.applyFiltersAndRender();
         this.updateDashboard();
+        this.populateFilterCurrencies();
         this.showNotification('تم حذف جميع المعاملات');
 
         // Trigger auto-backup to Google Drive (once per day)
@@ -127,24 +240,110 @@ class TradeTracker {
         }
     }
 
+    applyFiltersAndRender() {
+        // Start with all transactions
+        let filtered = [...this.transactions];
+
+        // Apply search
+        if (this.searchQuery) {
+            filtered = filtered.filter(t => {
+                return t.description.toLowerCase().includes(this.searchQuery) ||
+                       t.amount.toString().includes(this.searchQuery) ||
+                       (t.currency && t.currency.toLowerCase().includes(this.searchQuery));
+            });
+        }
+
+        // Apply type filter
+        filtered = filtered.filter(t => {
+            if (t.type === 'export') return this.filters.types.export;
+            if (t.type === 'import') return this.filters.types.import;
+            return true;
+        });
+
+        // Apply currency filter
+        if (this.filters.currency) {
+            filtered = filtered.filter(t => t.currency === this.filters.currency);
+        }
+
+        // Apply amount filter
+        if (this.filters.amountMin) {
+            filtered = filtered.filter(t => t.amount >= parseFloat(this.filters.amountMin));
+        }
+        if (this.filters.amountMax) {
+            filtered = filtered.filter(t => t.amount <= parseFloat(this.filters.amountMax));
+        }
+
+        // Apply date filter
+        if (this.filters.dateFrom) {
+            const fromDate = new Date(this.filters.dateFrom);
+            filtered = filtered.filter(t => new Date(t.date) >= fromDate);
+        }
+        if (this.filters.dateTo) {
+            const toDate = new Date(this.filters.dateTo);
+            toDate.setHours(23, 59, 59, 999);
+            filtered = filtered.filter(t => new Date(t.date) <= toDate);
+        }
+
+        // Apply sorting
+        filtered.sort((a, b) => {
+            switch (this.sortBy) {
+                case 'date-desc':
+                    return new Date(b.date) - new Date(a.date);
+                case 'date-asc':
+                    return new Date(a.date) - new Date(b.date);
+                case 'amount-desc':
+                    return b.amount - a.amount;
+                case 'amount-asc':
+                    return a.amount - b.amount;
+                default:
+                    return 0;
+            }
+        });
+
+        this.filteredTransactions = filtered;
+        this.renderTransactions();
+        this.updatePagination();
+    }
+
     renderTransactions() {
         const container = document.getElementById('transactionsList');
         const emptyState = document.getElementById('emptyState');
 
-        if (this.transactions.length === 0) {
+        // Use filtered transactions if available, otherwise use all
+        const transactionsToShow = this.filteredTransactions.length > 0 || this.searchQuery ||
+                                    this.filters.currency || this.filters.amountMin || this.filters.amountMax ||
+                                    this.filters.dateFrom || this.filters.dateTo ||
+                                    !this.filters.types.export || !this.filters.types.import
+            ? this.filteredTransactions
+            : this.transactions;
+
+        if (transactionsToShow.length === 0 && this.transactions.length === 0) {
             container.style.display = 'none';
             emptyState.style.display = 'block';
+            return;
+        }
+
+        if (transactionsToShow.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #808080; padding: 20px;">لا توجد معاملات تطابق الفلاتر المحددة</p>';
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
+            this.updatePagination();
             return;
         }
 
         container.style.display = 'block';
         emptyState.style.display = 'none';
 
+        // Pagination
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const paginatedTransactions = transactionsToShow.slice(startIndex, endIndex);
+
         // Check user role
         const role = localStorage.getItem('workspace_role');
         const canDelete = (role !== 'reader');
 
-        container.innerHTML = this.transactions.map(transaction => {
+        container.innerHTML = paginatedTransactions.map(transaction => {
             const date = new Date(transaction.date);
             const formattedDate = date.toLocaleDateString('ar-EG', {
                 year: 'numeric',
@@ -439,6 +638,113 @@ class TradeTracker {
         if (typeof Chart !== 'undefined') {
             this.createProfitChart();
             this.createComparisonChart();
+        }
+    }
+
+    updatePagination() {
+        const pagination = document.getElementById('pagination');
+        const pageInfo = document.getElementById('pageInfo');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+
+        if (!pagination) return;
+
+        const transactionsToShow = this.filteredTransactions.length > 0 || this.searchQuery ||
+                                    this.filters.currency || this.filters.amountMin || this.filters.amountMax ||
+                                    this.filters.dateFrom || this.filters.dateTo ||
+                                    !this.filters.types.export || !this.filters.types.import
+            ? this.filteredTransactions
+            : this.transactions;
+
+        const totalPages = Math.ceil(transactionsToShow.length / this.itemsPerPage);
+
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `صفحة ${this.currentPage} من ${totalPages}`;
+
+        // Disable/enable buttons
+        prevBtn.disabled = this.currentPage === 1;
+        nextBtn.disabled = this.currentPage === totalPages;
+    }
+
+    populateFilterCurrencies() {
+        const filterCurrency = document.getElementById('filterCurrency');
+        if (!filterCurrency) return;
+
+        // Get unique currencies from transactions
+        const currencies = [...new Set(this.transactions.map(t => t.currency).filter(c => c))];
+
+        // Get workspace currencies if available
+        const workspaceCurrencies = window.driveBackup?.workspaceCurrencies || [];
+        const workspaceCurrencyCodes = workspaceCurrencies.map(c => c.code);
+
+        // Combine and deduplicate
+        const allCurrencies = [...new Set([...workspaceCurrencyCodes, ...currencies])];
+
+        // Keep the default "الكل" option and add currencies
+        const currentValue = filterCurrency.value;
+        filterCurrency.innerHTML = '<option value="">الكل</option>' +
+            allCurrencies.map(currency => `<option value="${currency}">${currency}</option>`).join('');
+        filterCurrency.value = currentValue;
+    }
+
+    // Session Timeout Management
+    initSessionTimeout() {
+        // Only apply timeout if user is logged in
+        if (!localStorage.getItem('google_access_token')) {
+            return;
+        }
+
+        this.sessionTimeout = 30 * 60 * 1000; // 30 minutes
+        this.lastActivityTime = Date.now();
+
+        // Track user activity
+        const resetTimer = () => {
+            this.lastActivityTime = Date.now();
+        };
+
+        ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+            document.addEventListener(event, resetTimer, true);
+        });
+
+        // Check session every minute
+        this.sessionCheckInterval = setInterval(() => {
+            this.checkSessionTimeout();
+        }, 60000); // Check every 60 seconds
+
+        console.log('✓ Session timeout initialized (30 minutes)');
+    }
+
+    checkSessionTimeout() {
+        if (!localStorage.getItem('google_access_token')) {
+            if (this.sessionCheckInterval) {
+                clearInterval(this.sessionCheckInterval);
+            }
+            return;
+        }
+
+        const now = Date.now();
+        const timeElapsed = now - this.lastActivityTime;
+
+        // Show warning at 25 minutes (5 minutes before timeout)
+        if (timeElapsed > 25 * 60 * 1000 && timeElapsed < 26 * 60 * 1000) {
+            this.showNotification('⚠️ ستنتهي الجلسة خلال 5 دقائق بسبب عدم النشاط');
+        }
+
+        // Logout at 30 minutes
+        if (timeElapsed > this.sessionTimeout) {
+            console.log('⏰ Session timeout - logging out');
+            this.showNotification('⏰ انتهت الجلسة بسبب عدم النشاط');
+
+            setTimeout(() => {
+                if (window.driveBackup) {
+                    window.driveBackup.signOut();
+                }
+            }, 2000);
         }
     }
 

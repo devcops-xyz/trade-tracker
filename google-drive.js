@@ -209,6 +209,11 @@ class GoogleDriveBackup {
                         this.setDefaultCurrencyInForm();
                         this.updateDefaultCurrencyDisplay();
 
+                        // Update filter currencies dropdown
+                        if (window.tracker) {
+                            window.tracker.populateFilterCurrencies();
+                        }
+
                         console.log('✓ Workspace data loaded from Drive successfully!');
                         if (window.tracker) {
                             window.tracker.showNotification(`✓ تم تحميل ${backupData.data.transactions.length} معاملة`);
@@ -1213,6 +1218,11 @@ class GoogleDriveBackup {
         this.populateCurrencySelector();
         this.setDefaultCurrencyInForm();
         this.updateDefaultCurrencyDisplay();
+
+        // Update filter currencies dropdown
+        if (window.tracker) {
+            window.tracker.populateFilterCurrencies();
+        }
     }
 
     setDefaultCurrencyInForm() {
@@ -1286,6 +1296,11 @@ class GoogleDriveBackup {
         this.setDefaultCurrencyInForm();
         this.updateDefaultCurrencyDisplay();
 
+        // Update filter currencies dropdown
+        if (window.tracker) {
+            window.tracker.populateFilterCurrencies();
+        }
+
         // Auto-backup
         this.autoBackup();
 
@@ -1341,6 +1356,11 @@ class GoogleDriveBackup {
         this.displayCurrencies();
         this.populateCurrencySelector();
 
+        // Update filter currencies dropdown
+        if (window.tracker) {
+            window.tracker.populateFilterCurrencies();
+        }
+
         // Auto-backup to sync currencies
         this.autoBackup();
     }
@@ -1363,6 +1383,11 @@ class GoogleDriveBackup {
 
         this.displayCurrencies();
         this.populateCurrencySelector();
+
+        // Update filter currencies dropdown
+        if (window.tracker) {
+            window.tracker.populateFilterCurrencies();
+        }
 
         // Auto-backup to sync currencies
         this.autoBackup();
