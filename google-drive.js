@@ -50,32 +50,66 @@ class GoogleDriveBackup {
         const invitationCode = urlParams.get('workspace');
 
         if (savedToken && savedEmail) {
-            // User is signed in
+            // User is signed in - validate token
             this.accessToken = savedToken;
             this.currentUserEmail = savedEmail;
             this.updateUISignedIn(savedEmail); // Update UI to show email
 
-            if (savedWorkspace) {
-                // User has workspace, show app
-                this.workspaceId = savedWorkspace;
-                this.updateBackupFilename();
-                this.showApp();
-                this.displayWorkspaceCode();
-                this.updateBackupControlsVisibility(); // Update visibility based on role
-                this.updateUIBasedOnRole(); // Update UI based on role
-            } else if (invitationCode) {
-                // User signed in but has invitation link - show join form with code pre-filled
-                this.showWorkspaceGateWithInvitation(invitationCode);
-            } else {
-                // User signed in but no workspace, show workspace selection
-                this.showWorkspaceGate();
-            }
+            // Validate token by checking if it works
+            this.validateSavedToken(savedWorkspace, invitationCode);
         } else {
             // User not signed in
             if (invitationCode) {
                 // Save invitation code for after sign-in
                 sessionStorage.setItem('pending_workspace_invitation', invitationCode);
             }
+            this.showSignInGate();
+        }
+    }
+
+    async validateSavedToken(savedWorkspace, invitationCode) {
+        try {
+            // Try to validate token with a simple API call
+            const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                headers: { Authorization: `Bearer ${this.accessToken}` }
+            });
+
+            if (response.status === 401) {
+                // Token is expired, clear it and show sign-in
+                console.log('Saved token expired, clearing...');
+                localStorage.removeItem('gdrive_token');
+                localStorage.removeItem('gdrive_email');
+                this.accessToken = null;
+                this.currentUserEmail = null;
+                this.showSignInGate();
+                return;
+            }
+
+            if (response.ok) {
+                // Token is valid, continue with normal flow
+                if (savedWorkspace) {
+                    // User has workspace, show app
+                    this.workspaceId = savedWorkspace;
+                    this.updateBackupFilename();
+                    this.showApp();
+                    this.displayWorkspaceCode();
+                    this.updateBackupControlsVisibility();
+                    this.updateUIBasedOnRole();
+                } else if (invitationCode) {
+                    // User signed in but has invitation link
+                    this.showWorkspaceGateWithInvitation(invitationCode);
+                } else {
+                    // User signed in but no workspace
+                    this.showWorkspaceGate();
+                }
+            }
+        } catch (error) {
+            console.error('Token validation error:', error);
+            // On error, clear token and show sign-in
+            localStorage.removeItem('gdrive_token');
+            localStorage.removeItem('gdrive_email');
+            this.accessToken = null;
+            this.currentUserEmail = null;
             this.showSignInGate();
         }
     }
