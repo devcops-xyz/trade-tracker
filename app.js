@@ -10,6 +10,7 @@ class TradeTracker {
         this.updateDashboard();
         this.setupEventListeners();
         this.setDefaultDate();
+        this.initCharts();
     }
 
     setDefaultDate() {
@@ -66,6 +67,7 @@ class TradeTracker {
         this.saveTransactions();
         this.renderTransactions();
         this.updateDashboard();
+        this.updateCharts();
 
         // Reset form
         document.getElementById('transactionForm').reset();
@@ -88,6 +90,7 @@ class TradeTracker {
             this.saveTransactions();
             this.renderTransactions();
             this.updateDashboard();
+            this.updateCharts();
             this.showNotification('تم حذف المعاملة');
 
             // Trigger auto-backup to Google Drive (once per day)
@@ -248,6 +251,172 @@ class TradeTracker {
             notification.style.animation = 'slideUp 0.3s ease';
             setTimeout(() => notification.remove(), 300);
         }, 3000);
+    }
+
+    initCharts() {
+        // Wait for Chart.js to load
+        if (typeof Chart === 'undefined') {
+            setTimeout(() => this.initCharts(), 100);
+            return;
+        }
+
+        this.createProfitChart();
+        this.createComparisonChart();
+    }
+
+    createProfitChart() {
+        const ctx = document.getElementById('profitChart');
+        if (!ctx) return;
+
+        // Get last 6 months data
+        const monthsData = this.getMonthlyData(6);
+
+        // Destroy existing chart if any
+        if (this.profitChart) {
+            this.profitChart.destroy();
+        }
+
+        this.profitChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: monthsData.labels,
+                datasets: [{
+                    label: 'الربح',
+                    data: monthsData.profits,
+                    borderColor: '#4CAF50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e0e0e0',
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#b0b0b0' },
+                        grid: { color: '#2a2a3e' }
+                    },
+                    x: {
+                        ticks: { color: '#b0b0b0' },
+                        grid: { color: '#2a2a3e' }
+                    }
+                }
+            }
+        });
+    }
+
+    createComparisonChart() {
+        const ctx = document.getElementById('comparisonChart');
+        if (!ctx) return;
+
+        // Get last 6 months data
+        const monthsData = this.getMonthlyData(6);
+
+        // Destroy existing chart if any
+        if (this.comparisonChart) {
+            this.comparisonChart.destroy();
+        }
+
+        this.comparisonChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: monthsData.labels,
+                datasets: [
+                    {
+                        label: 'واردات',
+                        data: monthsData.exports,
+                        backgroundColor: 'rgba(33, 150, 243, 0.7)',
+                        borderColor: '#2196F3',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'صادرات',
+                        data: monthsData.imports,
+                        backgroundColor: 'rgba(255, 152, 0, 0.7)',
+                        borderColor: '#FF9800',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#e0e0e0',
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: '#b0b0b0' },
+                        grid: { color: '#2a2a3e' }
+                    },
+                    x: {
+                        ticks: { color: '#b0b0b0' },
+                        grid: { color: '#2a2a3e' }
+                    }
+                }
+            }
+        });
+    }
+
+    getMonthlyData(monthsCount) {
+        const now = new Date();
+        const labels = [];
+        const profits = [];
+        const exports = [];
+        const imports = [];
+
+        // Get data for last N months
+        for (let i = monthsCount - 1; i >= 0; i--) {
+            const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const monthName = date.toLocaleDateString('ar-EG', { month: 'short', year: 'numeric' });
+            labels.push(monthName);
+
+            // Calculate data for this month
+            const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+            const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+
+            const monthTransactions = this.transactions.filter(t => {
+                const transactionDate = new Date(t.date);
+                return transactionDate >= monthStart && transactionDate <= monthEnd;
+            });
+
+            const monthExports = monthTransactions
+                .filter(t => t.type === 'export')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const monthImports = monthTransactions
+                .filter(t => t.type === 'import')
+                .reduce((sum, t) => sum + t.amount, 0);
+
+            const monthProfit = monthExports - monthImports;
+
+            exports.push(monthExports);
+            imports.push(monthImports);
+            profits.push(monthProfit);
+        }
+
+        return { labels, profits, exports, imports };
+    }
+
+    updateCharts() {
+        if (typeof Chart !== 'undefined') {
+            this.createProfitChart();
+            this.createComparisonChart();
+        }
     }
 
 }

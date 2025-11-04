@@ -49,6 +49,7 @@ class GoogleDriveBackup {
                 this.updateBackupFilename();
                 this.showApp();
                 this.displayWorkspaceCode();
+                this.updateBackupControlsVisibility(); // Update visibility based on role
             } else {
                 // User signed in but no workspace, show workspace selection
                 this.showWorkspaceGate();
@@ -91,9 +92,11 @@ class GoogleDriveBackup {
         const workspaceId = this.generateWorkspaceId();
         this.workspaceId = workspaceId;
         localStorage.setItem('workspace_id', workspaceId);
+        localStorage.setItem('workspace_role', 'creator'); // Mark as creator
         this.updateBackupFilename();
         this.showApp();
         this.displayWorkspaceCode();
+        this.updateBackupControlsVisibility();
 
         // Try to load existing data from Drive (in case workspace code was reused)
         await this.loadWorkspaceData();
@@ -113,9 +116,11 @@ class GoogleDriveBackup {
         const workspaceId = code.toUpperCase();
         this.workspaceId = workspaceId;
         localStorage.setItem('workspace_id', workspaceId);
+        localStorage.setItem('workspace_role', 'member'); // Mark as member
         this.updateBackupFilename();
         this.showApp();
         this.displayWorkspaceCode();
+        this.updateBackupControlsVisibility();
 
         // Load shared data from Drive
         await this.loadWorkspaceData();
@@ -127,13 +132,20 @@ class GoogleDriveBackup {
     }
 
     async loadWorkspaceData() {
-        if (!this.accessToken) return;
+        if (!this.accessToken) {
+            console.error('Load workspace data failed: No access token');
+            return;
+        }
 
         try {
+            console.log('Looking for backup file:', this.BACKUP_FILENAME);
+
             // Find the backup file for this workspace
             await this.findBackupFile();
 
             if (this.fileId) {
+                console.log('Found backup file with ID:', this.fileId);
+
                 // Download the file
                 const response = await fetch(
                     `https://www.googleapis.com/drive/v3/files/${this.fileId}?alt=media`,
@@ -144,11 +156,15 @@ class GoogleDriveBackup {
                     }
                 );
 
+                console.log('Download response status:', response.status);
+
                 if (response.ok) {
                     const backupData = await response.json();
+                    console.log('Backup data retrieved:', backupData);
 
                     // Restore data
                     if (backupData.data && backupData.data.transactions) {
+                        console.log('Found', backupData.data.transactions.length, 'transactions');
                         localStorage.setItem('transactions', JSON.stringify(backupData.data.transactions));
 
                         // Reload the app
@@ -159,13 +175,27 @@ class GoogleDriveBackup {
                         }
 
                         console.log('✓ Workspace data loaded from Drive');
+                    } else {
+                        console.warn('Backup data format invalid or empty');
                     }
+                } else if (response.status === 401) {
+                    console.error('Token expired - need to re-authenticate');
+                    if (window.tracker) {
+                        window.tracker.showNotification('⚠️ انتهت صلاحية الجلسة. سجل دخول مرة أخرى');
+                    }
+                    this.signOut();
+                } else {
+                    console.error('Failed to download backup:', response.status, response.statusText);
                 }
             } else {
-                console.log('No existing backup found for this workspace');
+                console.log('No existing backup found for workspace:', this.workspaceId);
+                if (window.tracker) {
+                    window.tracker.showNotification('ℹ️ لا توجد بيانات في مساحة العمل بعد');
+                }
             }
         } catch (error) {
             console.error('Error loading workspace data:', error);
+            throw error; // Re-throw to be caught by syncWorkspace
         }
     }
 
@@ -180,6 +210,95 @@ class GoogleDriveBackup {
         if (codeEl && this.workspaceId) {
             codeEl.textContent = this.workspaceId;
         }
+        this.displayWorkspaceRole();
+        this.displayLastSync();
+    }
+
+    displayWorkspaceRole() {
+        const roleEl = document.getElementById('workspaceRole');
+        const workspaceRole = localStorage.getItem('workspace_role');
+
+        if (roleEl && workspaceRole) {
+            roleEl.textContent = workspaceRole === 'creator' ? 'منشئ' : 'عضو';
+            roleEl.className = `workspace-role-badge ${workspaceRole}`;
+        }
+    }
+
+    displayLastSync() {
+        const lastSync = localStorage.getItem('last_sync_time');
+        if (lastSync) {
+            this.updateSyncStatus();
+        }
+    }
+
+    updateSyncStatus() {
+        const lastSync = localStorage.getItem('last_sync_time');
+        const statusEl = document.getElementById('syncStatus');
+
+        if (!statusEl || !lastSync) return;
+
+        const syncTime = new Date(lastSync);
+        const now = new Date();
+        const diffMs = now - syncTime;
+        const diffMins = Math.floor(diffMs / 60000);
+
+        let statusText = '';
+        if (diffMins < 1) {
+            statusText = 'تم التحديث للتو';
+        } else if (diffMins < 60) {
+            statusText = `آخر تحديث: منذ ${diffMins} دقيقة`;
+        } else {
+            const diffHours = Math.floor(diffMins / 60);
+            statusText = `آخر تحديث: منذ ${diffHours} ساعة`;
+        }
+
+        statusEl.textContent = statusText;
+    }
+
+    updateBackupControlsVisibility() {
+        const workspaceRole = localStorage.getItem('workspace_role');
+        const backupControls = document.querySelector('.backup-controls');
+
+        if (backupControls) {
+            if (workspaceRole === 'member') {
+                // Hide backup settings for members
+                backupControls.style.display = 'none';
+                console.log('Backup controls hidden for workspace member');
+            } else {
+                // Show backup settings for creators
+                backupControls.style.display = 'flex';
+                console.log('Backup controls visible for workspace creator');
+            }
+        }
+    }
+
+    leaveWorkspace() {
+        if (!confirm('هل أنت متأكد من مغادرة مساحة العمل؟\nسيتم حذف جميع البيانات المحلية.')) {
+            return;
+        }
+
+        // Clear workspace data
+        localStorage.removeItem('workspace_id');
+        localStorage.removeItem('workspace_role');
+        localStorage.removeItem('transactions');
+        localStorage.removeItem('last_sync_time');
+
+        // Reset workspace variables
+        this.workspaceId = null;
+        this.fileId = null;
+        this.BACKUP_FILENAME = 'trade-tracker-backup.json';
+
+        // Clear UI
+        if (window.tracker) {
+            window.tracker.transactions = [];
+            window.tracker.renderTransactions();
+            window.tracker.updateDashboard();
+        }
+
+        // Show workspace selection
+        this.showWorkspaceGate();
+
+        console.log('Left workspace successfully');
     }
 
     shareWorkspace() {
@@ -200,16 +319,54 @@ class GoogleDriveBackup {
     }
 
     async syncWorkspace() {
-        if (!this.workspaceId || !this.accessToken) return;
-
-        if (window.tracker) {
-            window.tracker.showNotification('🔄 جاري التحديث من Drive...');
+        if (!this.workspaceId || !this.accessToken) {
+            console.error('Sync failed: Missing workspace ID or access token');
+            if (window.tracker) {
+                window.tracker.showNotification('⚠️ يرجى تسجيل الدخول أولاً');
+            }
+            return;
         }
 
-        await this.loadWorkspaceData();
+        // Add loading indicator
+        const syncBtn = document.getElementById('syncWorkspaceBtn');
+        if (syncBtn) {
+            syncBtn.classList.add('loading');
+        }
 
-        if (window.tracker) {
-            window.tracker.showNotification('✓ تم التحديث بنجاح');
+        try {
+            console.log('Starting sync for workspace:', this.workspaceId);
+
+            if (window.tracker) {
+                window.tracker.showNotification('🔄 جاري التحديث من Drive...');
+            }
+
+            await this.loadWorkspaceData();
+
+            // Save sync timestamp
+            localStorage.setItem('last_sync_time', new Date().toISOString());
+            this.updateSyncStatus();
+
+            // Update sync status every minute
+            if (this.syncStatusInterval) {
+                clearInterval(this.syncStatusInterval);
+            }
+            this.syncStatusInterval = setInterval(() => this.updateSyncStatus(), 60000);
+
+            if (window.tracker) {
+                window.tracker.showNotification('✓ تم التحديث بنجاح');
+            }
+
+            console.log('Sync completed successfully');
+        } catch (error) {
+            console.error('Sync error:', error);
+            if (window.tracker) {
+                window.tracker.showNotification('❌ فشل التحديث. حاول مرة أخرى');
+            }
+        } finally {
+            // Remove loading indicator
+            if (syncBtn) {
+                syncBtn.classList.remove('loading');
+            }
         }
     }
 
@@ -262,6 +419,11 @@ class GoogleDriveBackup {
         const syncWorkspaceBtn = document.getElementById('syncWorkspaceBtn');
         syncWorkspaceBtn?.addEventListener('click', () => {
             this.syncWorkspace();
+        });
+
+        const leaveWorkspaceBtn = document.getElementById('leaveWorkspaceBtn');
+        leaveWorkspaceBtn?.addEventListener('click', () => {
+            this.leaveWorkspace();
         });
 
         // Modal controls
@@ -419,6 +581,12 @@ class GoogleDriveBackup {
             return;
         }
 
+        const backupBtn = document.getElementById('backupBtn');
+        if (backupBtn) {
+            backupBtn.disabled = true;
+            backupBtn.textContent = '⏳ جاري النسخ...';
+        }
+
         try {
             this.showStatus('جاري النسخ الاحتياطي...', 'info');
 
@@ -461,6 +629,11 @@ class GoogleDriveBackup {
             if (response.ok) {
                 const result = await response.json();
                 this.fileId = result.id;
+
+                // Save sync timestamp
+                localStorage.setItem('last_sync_time', new Date().toISOString());
+                this.updateSyncStatus();
+
                 const date = new Date().toLocaleString('ar-EG');
                 this.showStatus(`✓ تم النسخ الاحتياطي بنجاح (${date})`, 'success');
             } else if (response.status === 401) {
@@ -472,6 +645,11 @@ class GoogleDriveBackup {
         } catch (error) {
             console.error('Backup error:', error);
             this.showStatus('فشل النسخ الاحتياطي ✗', 'error');
+        } finally {
+            if (backupBtn) {
+                backupBtn.disabled = false;
+                backupBtn.textContent = '☁️ نسخ احتياطي الآن';
+            }
         }
     }
 
@@ -720,12 +898,18 @@ class GoogleDriveBackup {
         }, 5000);
     }
 
-    // Auto-backup: Only once per day
+    // Auto-backup: Immediate for workspaces, once per day for personal use
     shouldAutoBackup() {
         if (!this.accessToken) {
             return false; // Not signed in
         }
 
+        // For workspaces, always backup immediately to enable collaboration
+        if (this.workspaceId) {
+            return true;
+        }
+
+        // For personal use, only backup once per day
         const lastBackup = localStorage.getItem('last_backup_date');
         const today = new Date().toDateString();
 
@@ -743,13 +927,14 @@ class GoogleDriveBackup {
         }
 
         try {
-            console.log('Auto-backup triggered...');
+            console.log('Auto-backup triggered for workspace:', this.workspaceId || 'personal');
 
             // Get current data from localStorage
             const transactions = localStorage.getItem('transactions') || '[]';
             const backupData = {
                 timestamp: new Date().toISOString(),
                 version: '1.0',
+                workspaceId: this.workspaceId || null,
                 data: {
                     transactions: JSON.parse(transactions)
                 }
@@ -785,8 +970,14 @@ class GoogleDriveBackup {
                 const result = await response.json();
                 this.fileId = result.id;
 
-                // Save today's date as last backup
-                localStorage.setItem('last_backup_date', new Date().toDateString());
+                // Save sync timestamp
+                localStorage.setItem('last_sync_time', new Date().toISOString());
+                this.updateSyncStatus();
+
+                // For personal use, save today's date as last backup
+                if (!this.workspaceId) {
+                    localStorage.setItem('last_backup_date', new Date().toDateString());
+                }
 
                 console.log('✓ Auto-backup completed successfully');
             } else if (response.status === 401) {

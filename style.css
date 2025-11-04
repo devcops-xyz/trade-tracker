@@ -73,8 +73,30 @@ header h1 {
     font-family: monospace;
 }
 
+.workspace-role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.workspace-role-badge.creator {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.workspace-role-badge.member {
+    background: rgba(33, 150, 243, 0.2);
+    color: #2196F3;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
 .btn-share,
-.btn-sync {
+.btn-sync,
+.btn-leave {
     background: none;
     border: none;
     cursor: pointer;
@@ -84,12 +106,32 @@ header h1 {
 }
 
 .btn-share:hover,
-.btn-sync:hover {
+.btn-sync:hover,
+.btn-leave:hover {
     transform: scale(1.2);
 }
 
 .btn-sync:active {
     animation: spin 0.5s ease;
+}
+
+.btn-sync.loading {
+    animation: spin 1s linear infinite;
+}
+
+.btn-leave {
+    color: #f44336;
+}
+
+.btn-leave:hover {
+    filter: brightness(1.2);
+}
+
+.sync-status {
+    font-size: 0.75rem;
+    color: #808080;
+    margin-top: 5px;
+    text-align: center;
 }
 
 @keyframes spin {
@@ -98,13 +140,16 @@ header h1 {
 }
 
 /* Backup Controls */
-.backup-controls {
+.backup-controls,
+.workspace-settings-controls {
     margin-top: 20px;
     display: flex;
     justify-content: center;
+    gap: 10px;
 }
 
-.btn-backup {
+.btn-backup,
+.btn-workspace-settings {
     padding: 10px 20px;
     border: none;
     border-radius: 6px;
@@ -117,10 +162,114 @@ header h1 {
     border: 1px solid #4d4d7d;
 }
 
-.btn-backup:hover {
+.btn-backup:hover,
+.btn-workspace-settings:hover {
     background: linear-gradient(135deg, #3d4571 0%, #4d3d71 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* Workspace Settings */
+.settings-section {
+    margin-bottom: 25px;
+}
+
+.settings-section h3 {
+    color: #e0e0e0;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+.settings-description {
+    color: #b0b0b0;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+}
+
+.currencies-list {
+    margin-bottom: 20px;
+}
+
+.currency-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #0f0f23;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.currency-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.currency-code {
+    font-weight: 700;
+    color: #4CAF50;
+    font-size: 1rem;
+    font-family: monospace;
+}
+
+.currency-name {
+    color: #b0b0b0;
+    font-size: 0.9rem;
+}
+
+.btn-remove-currency {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.3s;
+}
+
+.btn-remove-currency:hover {
+    background: #d32f2f;
+}
+
+.add-currency-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.currency-input {
+    flex: 1;
+    min-width: 150px;
+    padding: 10px;
+    background: #0f0f23;
+    border: 2px solid #2a2a3e;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+}
+
+.currency-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.currency-select {
+    width: 100%;
+    padding: 12px;
+    background: #0f0f23;
+    border: 2px solid #2a2a3e;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.currency-select:focus {
+    outline: none;
+    border-color: #667eea;
 }
 
 /* Modal Styles */
@@ -574,6 +723,58 @@ header h1 {
     flex: 1;
 }
 
+/* Role Selection */
+.role-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.role-option {
+    cursor: pointer;
+}
+
+.role-option input[type="radio"] {
+    display: none;
+}
+
+.role-card {
+    background: #0f0f23;
+    border: 2px solid #2a2a3e;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.role-option input[type="radio"]:checked + .role-card {
+    border-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.role-card:hover {
+    border-color: #4CAF50;
+    transform: translateY(-3px);
+}
+
+.role-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.role-title {
+    color: #e0e0e0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.role-desc {
+    color: #808080;
+    font-size: 0.85rem;
+}
+
 section {
     background: #1a1a2e;
     border-radius: 15px;
@@ -587,6 +788,35 @@ h2 {
     color: #e0e0e0;
     margin-bottom: 20px;
     font-size: 1.5rem;
+}
+
+/* Charts Section */
+.charts-section {
+    margin-bottom: 30px;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+
+.chart-card {
+    background: #0f0f23;
+    border: 1px solid #2a2a3e;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.chart-card h3 {
+    color: #b0b0b0;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.chart-card canvas {
+    max-height: 300px;
 }
 
 /* Dashboard Cards */
