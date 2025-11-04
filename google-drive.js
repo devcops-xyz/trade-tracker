@@ -1885,11 +1885,18 @@ class GoogleDriveBackup {
     // Phase 3: Team Collaboration Features
 
     addCurrentUserToMembers() {
+        console.log('👥 Adding current user to members...');
+        console.log('Current email from this.currentUserEmail:', this.currentUserEmail);
+
         if (!this.currentUserEmail) {
             this.currentUserEmail = localStorage.getItem('gdrive_email');
+            console.log('Current email from localStorage:', this.currentUserEmail);
         }
 
-        if (!this.currentUserEmail) return;
+        if (!this.currentUserEmail) {
+            console.warn('⚠️ Cannot add member: No email found');
+            return;
+        }
 
         // Check if current user is already in members list
         const existingMember = this.workspaceMembers.find(m => m.email === this.currentUserEmail);
@@ -1897,6 +1904,8 @@ class GoogleDriveBackup {
         if (!existingMember) {
             // Add current user as reader
             const role = localStorage.getItem('workspace_role') || 'reader';
+            console.log('➕ Adding new member:', this.currentUserEmail, 'with role:', role);
+
             this.workspaceMembers.push({
                 email: this.currentUserEmail,
                 role: role,
@@ -1940,11 +1949,16 @@ class GoogleDriveBackup {
             const roleNames = { creator: 'منشئ', writer: 'كاتب', reader: 'قارئ' };
             const isCreator = member.role === 'creator';
 
+            // Safety checks for email
+            const email = member.email || 'مستخدم غير معروف';
+            const username = this.getUsernameFromEmail(email);
+            const firstChar = email ? email.charAt(0).toUpperCase() : '?';
+
             return `
                 <div class="member-card">
-                    <div class="member-icon">${member.email.charAt(0).toUpperCase()}</div>
+                    <div class="member-icon">${firstChar}</div>
                     <div class="member-info">
-                        <div class="member-email">${this.getUsernameFromEmail(member.email)}</div>
+                        <div class="member-email">${username || email}</div>
                         <div class="member-joined">انضم في ${joinedDate}</div>
                     </div>
                     ${isCreator ?
