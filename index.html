@@ -279,6 +279,19 @@
                 <p class="empty-subtitle">ابدأ بإضافة معاملة جديدة أعلاه</p>
             </div>
         </section>
+
+        <!-- Activity Log Section -->
+        <section class="activity-log" id="activityLogSection" style="display: none;">
+            <div class="section-header">
+                <h2>📋 سجل النشاط</h2>
+                <button id="toggleActivityLog" class="btn-toggle-log">عرض</button>
+            </div>
+            <div id="activityLogContent" class="activity-log-content" style="display: none;">
+                <div id="activityList" class="activity-list">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- Quick Add Floating Button -->
@@ -358,6 +371,15 @@
             </div>
 
             <div class="modal-body">
+                <!-- Member Management Section (Creator Only) -->
+                <div class="settings-section" id="memberManagementSection" style="display: none;">
+                    <h3>👥 إدارة الأعضاء</h3>
+                    <p class="settings-description">عرض وإدارة أعضاء الفريق وصلاحياتهم</p>
+                    <div id="membersList" class="members-list">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
                 <!-- Currency Management Section -->
                 <div class="settings-section">
                     <h3>💱 العملات المتاحة</h3>

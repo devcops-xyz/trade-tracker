@@ -2163,3 +2163,344 @@ h2 {
         margin-top: 10px;
     }
 }
+
+/* Phase 3: Team Collaboration */
+
+/* Member Management */
+.members-list {
+    display: grid;
+    gap: 12px;
+}
+
+.member-card {
+    background: #0f0f23;
+    border: 2px solid #2a2a3e;
+    border-radius: 10px;
+    padding: 15px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s;
+}
+
+.member-card:hover {
+    border-color: #4CAF50;
+}
+
+.member-icon {
+    font-size: 1.8rem;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
+    border-radius: 50%;
+}
+
+.member-info {
+    flex: 1;
+}
+
+.member-email {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 5px;
+}
+
+.member-joined {
+    font-size: 0.85rem;
+    color: #808080;
+}
+
+.member-role-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.member-role-badge.creator {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+}
+
+.member-role-badge.writer {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+}
+
+.member-role-badge.reader {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+}
+
+.member-role-select {
+    padding: 8px 12px;
+    background: #1a1a2e;
+    border: 2px solid #2a2a3e;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.member-role-select:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+/* Activity Log */
+.activity-log {
+    margin-top: 20px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.btn-toggle-log {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #2d3561 0%, #3d2d61 100%);
+    color: #4CAF50;
+    border: 1px solid #4d4d7d;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-toggle-log:hover {
+    background: linear-gradient(135deg, #3d2d61 0%, #2d3561 100%);
+    transform: translateY(-2px);
+}
+
+.activity-log-content {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid #2a2a3e;
+    border-radius: 10px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-list {
+    display: grid;
+    gap: 10px;
+}
+
+.activity-item {
+    background: #0f0f23;
+    border-left: 4px solid #2a2a3e;
+    border-radius: 6px;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s;
+}
+
+.activity-item:hover {
+    border-left-color: #4CAF50;
+    transform: translateX(-5px);
+}
+
+.activity-item.added {
+    border-left-color: #4CAF50;
+}
+
+.activity-item.deleted {
+    border-left-color: #f44336;
+}
+
+.activity-item.modified {
+    border-left-color: #FF9800;
+}
+
+.activity-details {
+    flex: 1;
+}
+
+.activity-user {
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.activity-action {
+    color: #e0e0e0;
+    margin: 0 5px;
+}
+
+.activity-description {
+    color: #b0b0b0;
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+.activity-time {
+    font-size: 0.85rem;
+    color: #808080;
+    white-space: nowrap;
+}
+
+/* Transaction Comments */
+.transaction-comments {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #2a2a3e;
+}
+
+.comments-toggle {
+    background: none;
+    border: none;
+    color: #4CAF50;
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: all 0.3s;
+}
+
+.comments-toggle:hover {
+    text-decoration: underline;
+}
+
+.comments-list {
+    margin-top: 10px;
+    display: grid;
+    gap: 8px;
+}
+
+.comment-item {
+    background: rgba(255, 255, 255, 0.02);
+    border-left: 3px solid #4CAF50;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+.comment-author {
+    font-weight: 600;
+    color: #4CAF50;
+    font-size: 0.85rem;
+}
+
+.comment-text {
+    color: #e0e0e0;
+    margin: 4px 0;
+}
+
+.comment-time {
+    color: #808080;
+    font-size: 0.75rem;
+}
+
+.add-comment-form {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 8px 12px;
+    background: #1a1a2e;
+    border: 2px solid #2a2a3e;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    transition: border-color 0.3s;
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.btn-add-comment {
+    padding: 8px 16px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-add-comment:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+/* Notifications */
+.notification-badge {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(255, 152, 0, 0.4);
+    z-index: 1001;
+    animation: slideInRight 0.3s ease;
+    max-width: 300px;
+}
+
+.notification-badge.success {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+}
+
+.notification-badge.error {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+}
+
+.notification-badge.info {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design for Phase 3 */
+@media (max-width: 768px) {
+    .member-card {
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+    }
+
+    .member-role-badge,
+    .member-role-select {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
+
+    .activity-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .notification-badge {
+        right: 10px;
+        top: 10px;
+        max-width: calc(100% - 20px);
+    }
+}
