@@ -53,6 +53,7 @@ class GoogleDriveBackup {
             // User is signed in
             this.accessToken = savedToken;
             this.currentUserEmail = savedEmail;
+            this.updateUISignedIn(savedEmail); // Update UI to show email
 
             if (savedWorkspace) {
                 // User has workspace, show app
@@ -513,6 +514,10 @@ class GoogleDriveBackup {
                 if (window.tracker) {
                     window.tracker.showNotification('✓ تم نسخ رابط الدعوة');
                 }
+            }).catch((err) => {
+                // Clipboard write blocked - fallback to alert
+                console.log('Clipboard blocked, using fallback');
+                alert(shareText);
             });
         } else {
             // Fallback
