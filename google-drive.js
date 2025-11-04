@@ -814,6 +814,18 @@ class GoogleDriveBackup {
             const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
                 headers: { Authorization: `Bearer ${this.accessToken}` }
             });
+
+            if (response.status === 401) {
+                // Token expired, sign out
+                console.log('Token expired, signing out...');
+                this.signOut();
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
             this.currentUserEmail = data.email;
             localStorage.setItem('gdrive_email', data.email);
