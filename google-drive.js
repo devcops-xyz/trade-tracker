@@ -1516,9 +1516,15 @@ class GoogleDriveBackup {
                         modifiedTime: revision.modifiedTime,
                         isLatest: revision.id === revisions[0].id
                     };
+                } else if (response.status === 404) {
+                    // Revision was deleted - skip silently
+                    return null;
                 }
             } catch (error) {
-                console.error('Error loading revision:', error);
+                // Silently skip revisions that can't be loaded (likely just deleted)
+                if (error.message && !error.message.includes('404')) {
+                    console.error('Error loading revision:', error);
+                }
             }
             return null;
         });
@@ -1616,8 +1622,11 @@ class GoogleDriveBackup {
                     window.tracker.showNotification('✓ تم حذف النسخة الاحتياطية');
                 }
 
-                // Refresh the deletion list
-                this.deleteBackup();
+                // Wait a moment for Google Drive to update, then refresh the deletion list
+                this.showStatus('تم الحذف! جاري تحديث القائمة...', 'success');
+                setTimeout(() => {
+                    this.deleteBackup();
+                }, 1500);
 
             } else if (response.status === 401) {
                 this.showStatus('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً', 'error');
