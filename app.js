@@ -58,6 +58,32 @@ class TradeTracker {
             this.addTransaction();
         });
 
+        // Transaction type change - update submit button color
+        const typeRadios = document.querySelectorAll('input[name="type"]');
+        const submitBtn = document.querySelector('.btn-submit');
+
+        typeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'export') {
+                    submitBtn.classList.remove('btn-import');
+                    submitBtn.classList.add('btn-export');
+                } else {
+                    submitBtn.classList.remove('btn-export');
+                    submitBtn.classList.add('btn-import');
+                }
+            });
+        });
+
+        // Set initial button color based on default selection
+        const checkedRadio = document.querySelector('input[name="type"]:checked');
+        if (checkedRadio) {
+            if (checkedRadio.value === 'export') {
+                submitBtn.classList.add('btn-export');
+            } else {
+                submitBtn.classList.add('btn-import');
+            }
+        }
+
         // Search
         const searchInput = document.getElementById('searchTransactions');
         searchInput?.addEventListener('input', (e) => {
