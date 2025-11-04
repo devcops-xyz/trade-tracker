@@ -50,13 +50,12 @@ class GoogleDriveBackup {
         const invitationCode = urlParams.get('workspace');
 
         if (savedToken && savedEmail) {
-            // User is signed in - validate token
+            // User is signed in - validate token first before showing anything
             this.accessToken = savedToken;
             this.currentUserEmail = savedEmail;
-            this.updateUISignedIn(savedEmail); // Update UI to show email
 
-            // Validate token by checking if it works
-            this.validateSavedToken(savedWorkspace, invitationCode);
+            // Validate token by checking if it works (don't show UI until validated)
+            this.validateSavedToken(savedWorkspace, invitationCode, savedEmail);
         } else {
             // User not signed in
             if (invitationCode) {
@@ -67,7 +66,7 @@ class GoogleDriveBackup {
         }
     }
 
-    async validateSavedToken(savedWorkspace, invitationCode) {
+    async validateSavedToken(savedWorkspace, invitationCode, savedEmail) {
         try {
             // Try to validate token with a simple API call
             const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -86,7 +85,9 @@ class GoogleDriveBackup {
             }
 
             if (response.ok) {
-                // Token is valid, continue with normal flow
+                // Token is valid, now update UI and continue with normal flow
+                this.updateUISignedIn(savedEmail);
+
                 if (savedWorkspace) {
                     // User has workspace, show app
                     this.workspaceId = savedWorkspace;
