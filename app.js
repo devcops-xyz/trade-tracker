@@ -11,6 +11,13 @@ class TradeTracker {
         this.setupEventListeners();
         this.setDefaultDate();
         this.initCharts();
+
+        // Load currencies when Drive backup is ready
+        setTimeout(() => {
+            if (window.driveBackup) {
+                window.driveBackup.loadCurrencies();
+            }
+        }, 500);
     }
 
     setDefaultDate() {
@@ -37,11 +44,17 @@ class TradeTracker {
     addTransaction() {
         const type = document.querySelector('input[name="type"]:checked').value;
         const amount = parseFloat(document.getElementById('amount').value);
+        const currency = document.getElementById('currency').value;
         const description = document.getElementById('description').value;
         const transactionDate = document.getElementById('transactionDate').value;
 
         if (!amount || amount <= 0) {
             alert('يرجى إدخال مبلغ صحيح');
+            return;
+        }
+
+        if (!currency) {
+            alert('يرجى اختيار العملة');
             return;
         }
 
@@ -59,6 +72,7 @@ class TradeTracker {
             id: Date.now(),
             type: type,
             amount: amount,
+            currency: currency,
             description: description,
             date: new Date(transactionDate).toISOString()
         };
@@ -126,6 +140,10 @@ class TradeTracker {
         container.style.display = 'block';
         emptyState.style.display = 'none';
 
+        // Check user role
+        const role = localStorage.getItem('workspace_role');
+        const canDelete = (role !== 'reader');
+
         container.innerHTML = this.transactions.map(transaction => {
             const date = new Date(transaction.date);
             const formattedDate = date.toLocaleDateString('ar-EG', {
@@ -136,6 +154,11 @@ class TradeTracker {
                 minute: '2-digit'
             });
 
+            const currency = transaction.currency || 'USD';
+            const deleteButton = canDelete
+                ? `<button class="btn-delete" onclick="tracker.deleteTransaction(${transaction.id})">🗑️</button>`
+                : '';
+
             return `
                 <div class="transaction-item ${transaction.type}">
                     <div class="transaction-info">
@@ -145,8 +168,8 @@ class TradeTracker {
                         <div class="transaction-description">${transaction.description}</div>
                         <div class="transaction-date">${formattedDate}</div>
                     </div>
-                    <div class="transaction-amount">${transaction.amount.toFixed(2)}</div>
-                    <button class="btn-delete" onclick="tracker.deleteTransaction(${transaction.id})">🗑️</button>
+                    <div class="transaction-amount">${currency} ${transaction.amount.toFixed(2)}</div>
+                    ${deleteButton}
                 </div>
             `;
         }).join('');

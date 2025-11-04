@@ -8,6 +8,7 @@ class GoogleDriveBackup {
         this.BACKUP_FILENAME = 'trade-tracker-backup.json'; // Will be updated with workspace ID
         this.accessToken = null;
         this.fileId = null;
+        this.workspaceCurrencies = [];
 
         // Check if configured
         if (this.CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
@@ -50,6 +51,7 @@ class GoogleDriveBackup {
                 this.showApp();
                 this.displayWorkspaceCode();
                 this.updateBackupControlsVisibility(); // Update visibility based on role
+                this.updateUIBasedOnRole(); // Update UI based on role
             } else {
                 // User signed in but no workspace, show workspace selection
                 this.showWorkspaceGate();
@@ -107,7 +109,7 @@ class GoogleDriveBackup {
         }
     }
 
-    async joinWorkspace(code) {
+    async joinWorkspace(code, role = 'writer') {
         if (!code || code.length !== 6) {
             alert('رمز مساحة العمل غير صحيح');
             return;
@@ -116,11 +118,12 @@ class GoogleDriveBackup {
         const workspaceId = code.toUpperCase();
         this.workspaceId = workspaceId;
         localStorage.setItem('workspace_id', workspaceId);
-        localStorage.setItem('workspace_role', 'member'); // Mark as member
+        localStorage.setItem('workspace_role', role); // Save selected role (writer/reader)
         this.updateBackupFilename();
         this.showApp();
         this.displayWorkspaceCode();
         this.updateBackupControlsVisibility();
+        this.updateUIBasedOnRole();
 
         // Load shared data from Drive
         await this.loadWorkspaceData();
@@ -219,8 +222,41 @@ class GoogleDriveBackup {
         const workspaceRole = localStorage.getItem('workspace_role');
 
         if (roleEl && workspaceRole) {
-            roleEl.textContent = workspaceRole === 'creator' ? 'منشئ' : 'عضو';
+            const roleNames = {
+                'creator': 'منشئ',
+                'writer': 'كاتب',
+                'reader': 'قارئ'
+            };
+            roleEl.textContent = roleNames[workspaceRole] || 'عضو';
             roleEl.className = `workspace-role-badge ${workspaceRole}`;
+        }
+    }
+
+    updateUIBasedOnRole() {
+        const role = localStorage.getItem('workspace_role');
+
+        // Show workspace settings for creators only
+        const workspaceSettingsControls = document.querySelector('.workspace-settings-controls');
+        if (workspaceSettingsControls) {
+            workspaceSettingsControls.style.display = (role === 'creator') ? 'flex' : 'none';
+        }
+
+        // Disable transaction form for readers
+        const transactionForm = document.getElementById('transactionForm');
+        if (transactionForm && role === 'reader') {
+            const submitBtn = transactionForm.querySelector('.btn-submit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '🔒 وضع القراءة فقط';
+                submitBtn.style.opacity = '0.5';
+                submitBtn.style.cursor = 'not-allowed';
+            }
+
+            // Disable all form inputs
+            const inputs = transactionForm.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.disabled = true;
+            });
         }
     }
 
@@ -403,7 +439,8 @@ class GoogleDriveBackup {
 
         confirmJoinBtn?.addEventListener('click', () => {
             const code = document.getElementById('workspaceCodeInput').value;
-            this.joinWorkspace(code);
+            const role = document.querySelector('input[name="joinRole"]:checked')?.value || 'writer';
+            this.joinWorkspace(code, role);
         });
 
         cancelJoinBtn?.addEventListener('click', () => {
@@ -424,6 +461,32 @@ class GoogleDriveBackup {
         const leaveWorkspaceBtn = document.getElementById('leaveWorkspaceBtn');
         leaveWorkspaceBtn?.addEventListener('click', () => {
             this.leaveWorkspace();
+        });
+
+        // Workspace Settings Modal controls
+        const openWorkspaceSettingsBtn = document.getElementById('openWorkspaceSettings');
+        const closeWorkspaceSettingsBtn = document.getElementById('closeWorkspaceSettingsModal');
+        const workspaceSettingsModal = document.getElementById('workspaceSettingsModal');
+
+        openWorkspaceSettingsBtn?.addEventListener('click', () => {
+            workspaceSettingsModal.classList.add('active');
+            this.loadCurrencies();
+        });
+
+        closeWorkspaceSettingsBtn?.addEventListener('click', () => {
+            workspaceSettingsModal.classList.remove('active');
+        });
+
+        workspaceSettingsModal?.addEventListener('click', (e) => {
+            if (e.target === workspaceSettingsModal) {
+                workspaceSettingsModal.classList.remove('active');
+            }
+        });
+
+        // Currency management
+        const addCurrencyBtn = document.getElementById('addCurrencyBtn');
+        addCurrencyBtn?.addEventListener('click', () => {
+            this.addCurrency();
         });
 
         // Modal controls
@@ -990,6 +1053,114 @@ class GoogleDriveBackup {
         } catch (error) {
             console.error('Auto-backup error:', error);
         }
+    }
+
+    // Currency Management
+    loadCurrencies() {
+        // Load from localStorage first
+        const saved = localStorage.getItem('workspace_currencies');
+        if (saved) {
+            this.workspaceCurrencies = JSON.parse(saved);
+        } else {
+            // Default currencies
+            this.workspaceCurrencies = [
+                { code: 'USD', name: 'دولار أمريكي' },
+                { code: 'EUR', name: 'يورو' },
+                { code: 'SAR', name: 'ريال سعودي' }
+            ];
+            localStorage.setItem('workspace_currencies', JSON.stringify(this.workspaceCurrencies));
+        }
+
+        this.displayCurrencies();
+        this.populateCurrencySelector();
+    }
+
+    displayCurrencies() {
+        const container = document.getElementById('currenciesList');
+        if (!container) return;
+
+        if (this.workspaceCurrencies.length === 0) {
+            container.innerHTML = '<p style="color: #808080; text-align: center;">لا توجد عملات بعد</p>';
+            return;
+        }
+
+        container.innerHTML = this.workspaceCurrencies.map((currency, index) => `
+            <div class="currency-item">
+                <div class="currency-info">
+                    <span class="currency-code">${currency.code}</span>
+                    <span class="currency-name">${currency.name}</span>
+                </div>
+                <button class="btn-remove-currency" onclick="window.driveBackup.removeCurrency(${index})">
+                    🗑️ حذف
+                </button>
+            </div>
+        `).join('');
+    }
+
+    populateCurrencySelector() {
+        const select = document.getElementById('currency');
+        if (!select) return;
+
+        // Keep the first placeholder option and add currencies
+        select.innerHTML = '<option value="">اختر العملة</option>' +
+            this.workspaceCurrencies.map(currency =>
+                `<option value="${currency.code}">${currency.code} - ${currency.name}</option>`
+            ).join('');
+    }
+
+    addCurrency() {
+        const codeInput = document.getElementById('newCurrencyCode');
+        const nameInput = document.getElementById('newCurrencyName');
+
+        if (!codeInput || !nameInput) return;
+
+        const code = codeInput.value.trim().toUpperCase();
+        const name = nameInput.value.trim();
+
+        if (!code || !name) {
+            alert('يرجى إدخال رمز واسم العملة');
+            return;
+        }
+
+        if (code.length !== 3) {
+            alert('رمز العملة يجب أن يكون 3 أحرف');
+            return;
+        }
+
+        // Check if currency already exists
+        if (this.workspaceCurrencies.some(c => c.code === code)) {
+            alert('هذه العملة موجودة بالفعل');
+            return;
+        }
+
+        this.workspaceCurrencies.push({ code, name });
+        localStorage.setItem('workspace_currencies', JSON.stringify(this.workspaceCurrencies));
+
+        // Clear inputs
+        codeInput.value = '';
+        nameInput.value = '';
+
+        // Update displays
+        this.displayCurrencies();
+        this.populateCurrencySelector();
+
+        // Auto-backup to sync currencies
+        this.autoBackup();
+    }
+
+    removeCurrency(index) {
+        if (!confirm('هل أنت متأكد من حذف هذه العملة؟')) {
+            return;
+        }
+
+        this.workspaceCurrencies.splice(index, 1);
+        localStorage.setItem('workspace_currencies', JSON.stringify(this.workspaceCurrencies));
+
+        this.displayCurrencies();
+        this.populateCurrencySelector();
+
+        // Auto-backup to sync currencies
+        this.autoBackup();
     }
 }
 
