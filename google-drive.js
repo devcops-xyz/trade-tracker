@@ -28,11 +28,47 @@ class GoogleDriveBackup {
     init() {
         // Setup event listeners immediately (page is already loaded when this runs)
         this.setupEventListeners();
+
+        // Check sign-in status and show/hide gate
+        this.checkSignInStatus();
+    }
+
+    checkSignInStatus() {
+        const savedToken = localStorage.getItem('gdrive_token');
+        const savedEmail = localStorage.getItem('gdrive_email');
+
+        if (savedToken && savedEmail) {
+            // User is signed in, show app
+            this.accessToken = savedToken;
+            this.showApp();
+        } else {
+            // User not signed in, show gate
+            this.showSignInGate();
+        }
+    }
+
+    showSignInGate() {
+        document.getElementById('signInGate').classList.add('active');
+        document.getElementById('appContent').style.display = 'none';
+    }
+
+    showApp() {
+        document.getElementById('signInGate').classList.remove('active');
+        document.getElementById('appContent').style.display = 'block';
     }
 
     setupEventListeners() {
         console.log('Setting up Google Drive event listeners...');
         console.log('Client ID:', this.CLIENT_ID);
+
+        // Sign-in gate button
+        const signInGateBtn = document.getElementById('signInGateBtn');
+        if (signInGateBtn) {
+            signInGateBtn.addEventListener('click', () => {
+                console.log('Sign in gate button clicked!');
+                this.signIn();
+            });
+        }
 
         // Modal controls
         const openModalBtn = document.getElementById('openBackupSettings');
@@ -119,6 +155,9 @@ class GoogleDriveBackup {
                         localStorage.setItem('gdrive_token', this.accessToken);
                         this.getUserInfo();
                         this.showStatus('تم تسجيل الدخول بنجاح ✓', 'success');
+
+                        // Show the app after successful sign-in
+                        this.showApp();
                     }
                 },
             });
@@ -148,6 +187,9 @@ class GoogleDriveBackup {
         localStorage.removeItem('gdrive_email');
         this.updateUISignedOut();
         this.showStatus('تم تسجيل الخروج', 'info');
+
+        // Show sign-in gate after sign-out
+        this.showSignInGate();
     }
 
     updateUISignedIn(email) {
@@ -416,11 +458,18 @@ class GoogleDriveBackup {
                     window.tracker.updateDashboard();
                 }
 
-                const date = new Date(backupData.timestamp).toLocaleString('ar-EG');
-                this.showStatus(`✓ تم استعادة البيانات (${date})`, 'success');
+                // Close the modal
+                const modal = document.getElementById('backupModal');
+                modal.classList.remove('active');
 
                 // Restore modal content
                 this.cancelRestore();
+
+                // Show success notification in main app
+                if (window.tracker) {
+                    const date = new Date(backupData.timestamp).toLocaleString('ar-EG');
+                    window.tracker.showNotification(`✓ تم استعادة البيانات (${date})`);
+                }
             } else {
                 throw new Error('Invalid backup format');
             }
