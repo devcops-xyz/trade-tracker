@@ -15,8 +15,11 @@ class TradeTracker {
             dateTo: ''
         };
         this.sortBy = 'date-desc';
+        this.exchangeRates = {};
+        this.baseCurrency = 'USD';
         this.init();
         this.initSessionTimeout();
+        this.fetchExchangeRates();
     }
 
     init() {
@@ -148,6 +151,56 @@ class TradeTracker {
             setTimeout(() => {
                 document.getElementById('amount')?.focus();
             }, 500);
+        });
+
+        // Reports Modal
+        const openReportsBtn = document.getElementById('openReportsBtn');
+        const closeReportsBtn = document.getElementById('closeReportsModal');
+        const reportsModal = document.getElementById('reportsModal');
+
+        openReportsBtn?.addEventListener('click', () => {
+            reportsModal.classList.add('active');
+            this.generateProfitByCurrencyReport();
+            this.populateConverterCurrencies();
+            this.populateBaseCurrencySelect();
+        });
+
+        closeReportsBtn?.addEventListener('click', () => {
+            reportsModal.classList.remove('active');
+        });
+
+        reportsModal?.addEventListener('click', (e) => {
+            if (e.target === reportsModal) {
+                reportsModal.classList.remove('active');
+            }
+        });
+
+        // Currency Converter
+        const convertAmountInput = document.getElementById('convertAmount');
+        const convertFromSelect = document.getElementById('convertFromCurrency');
+        const convertToSelect = document.getElementById('convertToCurrency');
+        const swapBtn = document.getElementById('swapCurrenciesBtn');
+
+        [convertAmountInput, convertFromSelect, convertToSelect].forEach(el => {
+            el?.addEventListener('input', () => this.performCurrencyConversion());
+            el?.addEventListener('change', () => this.performCurrencyConversion());
+        });
+
+        swapBtn?.addEventListener('click', () => {
+            const from = convertFromSelect.value;
+            const to = convertToSelect.value;
+            convertFromSelect.value = to;
+            convertToSelect.value = from;
+            this.performCurrencyConversion();
+        });
+
+        // Base Currency Select
+        const baseCurrencySelect = document.getElementById('baseCurrencySelect');
+        baseCurrencySelect?.addEventListener('change', (e) => {
+            this.baseCurrency = e.target.value;
+            if (this.baseCurrency) {
+                this.generateMultiCurrencySummary();
+            }
         });
     }
 
@@ -746,6 +799,288 @@ class TradeTracker {
                 }
             }, 2000);
         }
+    }
+
+    // Phase 2: Multi-Currency Features
+
+    async fetchExchangeRates() {
+        try {
+            console.log('🔄 Fetching exchange rates...');
+
+            // Using exchangerate-api.com free tier (1500 requests/month)
+            const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch exchange rates');
+            }
+
+            const data = await response.json();
+            this.exchangeRates = data.rates;
+
+            console.log('✓ Exchange rates loaded:', Object.keys(this.exchangeRates).length, 'currencies');
+
+            // Cache rates for 24 hours
+            localStorage.setItem('exchange_rates', JSON.stringify(this.exchangeRates));
+            localStorage.setItem('exchange_rates_timestamp', Date.now().toString());
+        } catch (error) {
+            console.error('❌ Failed to fetch exchange rates:', error);
+
+            // Load from cache if available
+            const cached = localStorage.getItem('exchange_rates');
+            if (cached) {
+                this.exchangeRates = JSON.parse(cached);
+                console.log('ℹ️ Using cached exchange rates');
+            } else {
+                // Fallback to basic rates
+                this.exchangeRates = { USD: 1, EUR: 0.85, GBP: 0.73, SAR: 3.75 };
+                console.log('⚠️ Using fallback exchange rates');
+            }
+        }
+    }
+
+    convertCurrency(amount, fromCurrency, toCurrency) {
+        if (fromCurrency === toCurrency) {
+            return amount;
+        }
+
+        // Convert from source to USD, then USD to target
+        const amountInUSD = amount / (this.exchangeRates[fromCurrency] || 1);
+        const converted = amountInUSD * (this.exchangeRates[toCurrency] || 1);
+
+        return converted;
+    }
+
+    generateProfitByCurrencyReport() {
+        const container = document.getElementById('profitByCurrencyReport');
+        if (!container) return;
+
+        // Group transactions by currency
+        const currencyData = {};
+
+        this.transactions.forEach(transaction => {
+            const currency = transaction.currency || 'USD';
+
+            if (!currencyData[currency]) {
+                currencyData[currency] = {
+                    exports: 0,
+                    imports: 0,
+                    profit: 0,
+                    count: 0
+                };
+            }
+
+            if (transaction.type === 'export') {
+                currencyData[currency].exports += transaction.amount;
+            } else {
+                currencyData[currency].imports += transaction.amount;
+            }
+
+            currencyData[currency].count++;
+        });
+
+        // Calculate profit for each currency
+        Object.keys(currencyData).forEach(currency => {
+            const data = currencyData[currency];
+            data.profit = data.exports - data.imports;
+        });
+
+        // Check if empty
+        if (Object.keys(currencyData).length === 0) {
+            container.innerHTML = `
+                <div class="report-empty-state">
+                    <div class="report-empty-state-icon">📊</div>
+                    <p>لا توجد معاملات لعرض التقرير</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Generate HTML
+        const html = Object.keys(currencyData)
+            .sort((a, b) => Math.abs(currencyData[b].profit) - Math.abs(currencyData[a].profit))
+            .map(currency => {
+                const data = currencyData[currency];
+                const profitClass = data.profit > 0 ? 'profit' : data.profit < 0 ? 'loss' : 'neutral';
+                const profitSign = data.profit > 0 ? '+' : '';
+
+                // Get currency name from workspace currencies
+                const workspaceCurrencies = window.driveBackup?.workspaceCurrencies || [];
+                const currencyInfo = workspaceCurrencies.find(c => c.code === currency);
+                const currencyName = currencyInfo ? currencyInfo.name : currency;
+
+                return `
+                    <div class="currency-profit-card">
+                        <div class="currency-icon">${currency}</div>
+                        <div class="currency-profit-details">
+                            <div class="currency-profit-name">${currencyName}</div>
+                            <div class="currency-profit-breakdown">
+                                <span>📤 ${data.exports.toFixed(2)}</span>
+                                <span>📥 ${data.imports.toFixed(2)}</span>
+                                <span>📊 ${data.count} معاملة</span>
+                            </div>
+                        </div>
+                        <div class="currency-profit-amount ${profitClass}">
+                            ${profitSign}${data.profit.toFixed(2)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        container.innerHTML = html;
+    }
+
+    populateConverterCurrencies() {
+        const fromSelect = document.getElementById('convertFromCurrency');
+        const toSelect = document.getElementById('convertToCurrency');
+
+        if (!fromSelect || !toSelect) return;
+
+        // Get unique currencies from transactions
+        const currencies = [...new Set(this.transactions.map(t => t.currency).filter(c => c))];
+
+        // Get workspace currencies
+        const workspaceCurrencies = window.driveBackup?.workspaceCurrencies || [];
+        const workspaceCurrencyCodes = workspaceCurrencies.map(c => c.code);
+
+        // Combine and add common currencies from exchange rates
+        const commonCurrencies = ['USD', 'EUR', 'GBP', 'SAR', 'AED', 'EGP', 'JPY', 'CNY'];
+        const allCurrencies = [...new Set([...workspaceCurrencyCodes, ...currencies, ...commonCurrencies])];
+
+        const currentFrom = fromSelect.value;
+        const currentTo = toSelect.value;
+
+        const optionsHTML = '<option value="">اختر العملة</option>' +
+            allCurrencies.map(currency => `<option value="${currency}">${currency}</option>`).join('');
+
+        fromSelect.innerHTML = optionsHTML;
+        toSelect.innerHTML = optionsHTML;
+
+        // Restore selections
+        if (currentFrom) fromSelect.value = currentFrom;
+        if (currentTo) toSelect.value = currentTo;
+    }
+
+    performCurrencyConversion() {
+        const amount = parseFloat(document.getElementById('convertAmount').value);
+        const fromCurrency = document.getElementById('convertFromCurrency').value;
+        const toCurrency = document.getElementById('convertToCurrency').value;
+        const resultEl = document.getElementById('conversionResult');
+
+        if (!amount || !fromCurrency || !toCurrency) {
+            resultEl.textContent = 'أدخل المبلغ والعملات للتحويل';
+            return;
+        }
+
+        if (fromCurrency === toCurrency) {
+            resultEl.textContent = `${amount.toFixed(2)} ${toCurrency}`;
+            return;
+        }
+
+        const converted = this.convertCurrency(amount, fromCurrency, toCurrency);
+        resultEl.textContent = `${amount.toFixed(2)} ${fromCurrency} = ${converted.toFixed(2)} ${toCurrency}`;
+    }
+
+    populateBaseCurrencySelect() {
+        const select = document.getElementById('baseCurrencySelect');
+        if (!select) return;
+
+        // Get unique currencies
+        const currencies = [...new Set(this.transactions.map(t => t.currency).filter(c => c))];
+        const workspaceCurrencies = window.driveBackup?.workspaceCurrencies || [];
+        const workspaceCurrencyCodes = workspaceCurrencies.map(c => c.code);
+        const allCurrencies = [...new Set([...workspaceCurrencyCodes, ...currencies, 'USD', 'EUR'])];
+
+        const currentValue = select.value || this.baseCurrency;
+
+        select.innerHTML = '<option value="">اختر العملة الأساسية</option>' +
+            allCurrencies.map(currency => `<option value="${currency}">${currency}</option>`).join('');
+
+        select.value = currentValue;
+
+        // Auto-generate summary if currency is selected
+        if (currentValue) {
+            this.generateMultiCurrencySummary();
+        }
+    }
+
+    generateMultiCurrencySummary() {
+        const container = document.getElementById('multiCurrencySummary');
+        if (!container || !this.baseCurrency) return;
+
+        // Group by currency and convert to base currency
+        const currencyData = {};
+        let totalExports = 0;
+        let totalImports = 0;
+
+        this.transactions.forEach(transaction => {
+            const currency = transaction.currency || 'USD';
+
+            if (!currencyData[currency]) {
+                currencyData[currency] = {
+                    exports: 0,
+                    imports: 0,
+                    exportsInBase: 0,
+                    importsInBase: 0
+                };
+            }
+
+            const amount = transaction.amount;
+            const amountInBase = this.convertCurrency(amount, currency, this.baseCurrency);
+
+            if (transaction.type === 'export') {
+                currencyData[currency].exports += amount;
+                currencyData[currency].exportsInBase += amountInBase;
+                totalExports += amountInBase;
+            } else {
+                currencyData[currency].imports += amount;
+                currencyData[currency].importsInBase += amountInBase;
+                totalImports += amountInBase;
+            }
+        });
+
+        const totalProfit = totalExports - totalImports;
+        const profitClass = totalProfit >= 0 ? 'profit' : 'loss';
+        const profitSign = totalProfit > 0 ? '+' : '';
+
+        if (Object.keys(currencyData).length === 0) {
+            container.innerHTML = `
+                <div class="report-empty-state">
+                    <div class="report-empty-state-icon">💱</div>
+                    <p>لا توجد معاملات لعرض الملخص</p>
+                </div>
+            `;
+            return;
+        }
+
+        const currenciesHTML = Object.keys(currencyData).map(currency => {
+            const data = currencyData[currency];
+            const profit = data.exportsInBase - data.importsInBase;
+            const profitClass = profit >= 0 ? 'profit' : 'loss';
+
+            return `
+                <div class="summary-card">
+                    <div class="summary-card-label">${currency} → ${this.baseCurrency}</div>
+                    <div class="summary-card-value ${profitClass}">
+                        ${profit >= 0 ? '+' : ''}${profit.toFixed(2)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="summary-grid">
+                ${currenciesHTML}
+            </div>
+            <div class="summary-total">
+                <div class="summary-total-label">إجمالي الربح (${this.baseCurrency})</div>
+                <div class="summary-total-value ${profitClass}">
+                    ${profitSign}${totalProfit.toFixed(2)} ${this.baseCurrency}
+                </div>
+                <div class="summary-total-note">
+                    واردات: ${totalExports.toFixed(2)} | صادرات: ${totalImports.toFixed(2)}
+                </div>
+            </div>
+        `;
     }
 
 }

@@ -104,7 +104,10 @@
         <section class="dashboard">
             <div class="dashboard-header">
                 <h2>لوحة التحكم</h2>
-                <button id="openChartsBtn" class="btn-view-charts">📈 عرض الرسوم البيانية</button>
+                <div class="dashboard-actions">
+                    <button id="openChartsBtn" class="btn-view-charts">📈 عرض الرسوم البيانية</button>
+                    <button id="openReportsBtn" class="btn-view-reports">📊 التقارير التفصيلية</button>
+                </div>
             </div>
             <div class="profit-cards">
                 <div class="card daily">
@@ -384,6 +387,75 @@
                             🗑️ حذف النسخة الاحتياطية من Drive
                         </button>
                         <p class="danger-warning">⚠️ سيتم حذف جميع البيانات المحفوظة على Google Drive</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div id="reportsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📊 التقارير التفصيلية</h2>
+                <button class="modal-close" id="closeReportsModal">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Profit by Currency Section -->
+                <div class="report-section">
+                    <h3>💰 الأرباح حسب العملة</h3>
+                    <p class="report-description">عرض تفصيلي للأرباح والخسائر لكل عملة</p>
+                    <div id="profitByCurrencyReport" class="profit-by-currency-list">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Currency Conversion Section -->
+                <div class="report-section">
+                    <h3>💱 محول العملات</h3>
+                    <p class="report-description">تحويل المبالغ بين العملات</p>
+                    <div class="currency-converter">
+                        <div class="converter-row">
+                            <div class="converter-field">
+                                <label>المبلغ</label>
+                                <input type="number" id="convertAmount" step="0.01" placeholder="0.00" class="converter-input">
+                            </div>
+                            <div class="converter-field">
+                                <label>من</label>
+                                <select id="convertFromCurrency" class="converter-select">
+                                    <option value="">اختر العملة</option>
+                                </select>
+                            </div>
+                            <button id="swapCurrenciesBtn" class="btn-swap" title="عكس العملات">⇄</button>
+                            <div class="converter-field">
+                                <label>إلى</label>
+                                <select id="convertToCurrency" class="converter-select">
+                                    <option value="">اختر العملة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="converter-result">
+                            <div id="conversionResult" class="conversion-result-text">أدخل المبلغ والعملات للتحويل</div>
+                        </div>
+                        <div class="converter-note">
+                            <small>💡 أسعار الصرف يتم تحديثها تلقائياً من الإنترنت</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Currency Summary -->
+                <div class="report-section">
+                    <h3>📈 الملخص الموحد</h3>
+                    <p class="report-description">جميع الأرباح محولة إلى العملة الأساسية</p>
+                    <div class="base-currency-selector">
+                        <label>العملة الأساسية:</label>
+                        <select id="baseCurrencySelect" class="base-currency-select">
+                            <option value="">اختر العملة</option>
+                        </select>
+                    </div>
+                    <div id="multiCurrencySummary" class="multi-currency-summary">
+                        <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
