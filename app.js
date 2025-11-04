@@ -481,33 +481,73 @@ class TradeTracker {
             return transactionDate >= startDate;
         });
 
-        const exports = filtered
-            .filter(t => t.type === 'export')
-            .reduce((sum, t) => sum + t.amount, 0);
+        // Group by currency
+        const byCurrency = {};
 
-        const imports = filtered
-            .filter(t => t.type === 'import')
-            .reduce((sum, t) => sum + t.amount, 0);
+        filtered.forEach(t => {
+            const currency = t.currency || 'USD';
+            if (!byCurrency[currency]) {
+                byCurrency[currency] = { exports: 0, imports: 0, profit: 0 };
+            }
 
-        const profit = exports - imports;
+            if (t.type === 'export') {
+                byCurrency[currency].exports += t.amount;
+            } else {
+                byCurrency[currency].imports += t.amount;
+            }
+        });
 
-        return { exports, imports, profit };
+        // Calculate profit for each currency
+        Object.keys(byCurrency).forEach(currency => {
+            byCurrency[currency].profit = byCurrency[currency].exports - byCurrency[currency].imports;
+        });
+
+        return byCurrency;
     }
 
-    updateProfitCard(period, data) {
+    updateProfitCard(period, byCurrency) {
         const profitElement = document.getElementById(`${period}Profit`);
         const exportsElement = document.getElementById(`${period}Exports`);
         const importsElement = document.getElementById(`${period}Imports`);
 
-        profitElement.textContent = data.profit.toFixed(2);
-        exportsElement.textContent = data.exports.toFixed(2);
-        importsElement.textContent = data.imports.toFixed(2);
+        const currencies = Object.keys(byCurrency);
 
-        // Update color based on profit/loss
+        if (currencies.length === 0) {
+            // No transactions
+            profitElement.innerHTML = '0.00';
+            exportsElement.innerHTML = '0.00';
+            importsElement.innerHTML = '0.00';
+            profitElement.classList.remove('profit', 'loss');
+            return;
+        }
+
+        // Build HTML for each currency
+        const profitHTML = currencies.map(currency => {
+            const data = byCurrency[currency];
+            const profitClass = data.profit >= 0 ? 'profit' : 'loss';
+            return `<span class="${profitClass}">${data.profit.toFixed(2)} ${currency}</span>`;
+        }).join('<br>');
+
+        const exportsHTML = currencies.map(currency => {
+            return `${byCurrency[currency].exports.toFixed(2)} ${currency}`;
+        }).join('<br>');
+
+        const importsHTML = currencies.map(currency => {
+            return `${byCurrency[currency].imports.toFixed(2)} ${currency}`;
+        }).join('<br>');
+
+        profitElement.innerHTML = profitHTML;
+        exportsElement.innerHTML = exportsHTML;
+        importsElement.innerHTML = importsHTML;
+
+        // Update color based on overall profit/loss (check if any currency has profit)
+        const hasProfit = currencies.some(c => byCurrency[c].profit > 0);
+        const hasLoss = currencies.some(c => byCurrency[c].profit < 0);
+
         profitElement.classList.remove('profit', 'loss');
-        if (data.profit >= 0) {
+        if (hasProfit && !hasLoss) {
             profitElement.classList.add('profit');
-        } else {
+        } else if (hasLoss && !hasProfit) {
             profitElement.classList.add('loss');
         }
     }

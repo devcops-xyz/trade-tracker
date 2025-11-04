@@ -45,6 +45,10 @@ class GoogleDriveBackup {
         const savedEmail = localStorage.getItem('gdrive_email');
         const savedWorkspace = localStorage.getItem('workspace_id');
 
+        // Check for workspace invitation parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const invitationCode = urlParams.get('workspace');
+
         if (savedToken && savedEmail) {
             // User is signed in
             this.accessToken = savedToken;
@@ -58,12 +62,19 @@ class GoogleDriveBackup {
                 this.displayWorkspaceCode();
                 this.updateBackupControlsVisibility(); // Update visibility based on role
                 this.updateUIBasedOnRole(); // Update UI based on role
+            } else if (invitationCode) {
+                // User signed in but has invitation link - show join form with code pre-filled
+                this.showWorkspaceGateWithInvitation(invitationCode);
             } else {
                 // User signed in but no workspace, show workspace selection
                 this.showWorkspaceGate();
             }
         } else {
-            // User not signed in, show sign-in gate
+            // User not signed in
+            if (invitationCode) {
+                // Save invitation code for after sign-in
+                sessionStorage.setItem('pending_workspace_invitation', invitationCode);
+            }
             this.showSignInGate();
         }
     }
@@ -78,6 +89,48 @@ class GoogleDriveBackup {
         document.getElementById('signInGate').classList.remove('active');
         document.getElementById('workspaceGate').classList.add('active');
         document.getElementById('appContent').style.display = 'none';
+
+        // Ensure the workspace actions are visible and form is hidden
+        const workspaceActions = document.querySelector('.workspace-actions');
+        const joinWorkspaceForm = document.getElementById('joinWorkspaceForm');
+        const workspaceCodeInput = document.getElementById('workspaceCodeInput');
+
+        if (workspaceActions) workspaceActions.style.display = 'flex';
+        if (joinWorkspaceForm) joinWorkspaceForm.style.display = 'none';
+        if (workspaceCodeInput) workspaceCodeInput.value = '';
+    }
+
+    showWorkspaceGateWithInvitation(invitationCode) {
+        document.getElementById('signInGate').classList.remove('active');
+        document.getElementById('workspaceGate').classList.add('active');
+        document.getElementById('appContent').style.display = 'none';
+
+        // Show the join form with code pre-filled
+        const workspaceActions = document.querySelector('.workspace-actions');
+        const joinWorkspaceForm = document.getElementById('joinWorkspaceForm');
+        const workspaceCodeInput = document.getElementById('workspaceCodeInput');
+
+        if (workspaceActions) workspaceActions.style.display = 'none';
+        if (joinWorkspaceForm) joinWorkspaceForm.style.display = 'block';
+        if (workspaceCodeInput) {
+            workspaceCodeInput.value = invitationCode;
+            workspaceCodeInput.focus();
+        }
+
+        // Show notification
+        if (window.tracker) {
+            window.tracker.showNotification('✓ تم تعبئة رمز مساحة العمل. اضغط "انضمام" للمتابعة');
+        } else {
+            // If tracker not available yet, show alert
+            setTimeout(() => {
+                if (window.tracker) {
+                    window.tracker.showNotification('✓ تم تعبئة رمز مساحة العمل. اضغط "انضمام" للمتابعة');
+                }
+            }, 500);
+        }
+
+        // Clear URL parameter
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     showApp() {
@@ -102,6 +155,11 @@ class GoogleDriveBackup {
         localStorage.setItem('workspace_id', workspaceId);
         localStorage.setItem('workspace_role', 'creator'); // Mark as creator
         this.updateBackupFilename();
+
+        // Ensure we have the current user email
+        if (!this.currentUserEmail) {
+            this.currentUserEmail = localStorage.getItem('gdrive_email');
+        }
 
         // Initialize workspace with creator as first member
         this.workspaceMembers = [{
@@ -440,12 +498,15 @@ class GoogleDriveBackup {
     shareWorkspace() {
         if (!this.workspaceId) return;
 
-        const shareText = `انضم لمساحة العمل على متتبع التجارة:\n\nالرمز: ${this.workspaceId}\n\nالرابط: https://devcops-xyz.github.io/trade-tracker/`;
+        // Create direct invitation link with workspace code
+        const invitationUrl = `${window.location.origin}${window.location.pathname}?workspace=${this.workspaceId}`;
+
+        const shareText = `انضم لمساحة العمل على متتبع التجارة:\n\nالرابط المباشر:\n${invitationUrl}\n\nأو استخدم الرمز: ${this.workspaceId}`;
 
         if (navigator.clipboard) {
             navigator.clipboard.writeText(shareText).then(() => {
                 if (window.tracker) {
-                    window.tracker.showNotification('✓ تم نسخ رمز مساحة العمل');
+                    window.tracker.showNotification('✓ تم نسخ رابط الدعوة');
                 }
             });
         } else {
@@ -571,7 +632,6 @@ class GoogleDriveBackup {
         openSettingsBtn?.addEventListener('click', () => {
             settingsModal.classList.add('active');
             this.loadCurrencies();
-            this.displayWorldCurrencies();
             this.displayMemberManagement();
         });
 
@@ -583,12 +643,6 @@ class GoogleDriveBackup {
             if (e.target === settingsModal) {
                 settingsModal.classList.remove('active');
             }
-        });
-
-        // Currency management
-        const currencySearchInput = document.getElementById('currencySearch');
-        currencySearchInput?.addEventListener('input', (e) => {
-            this.filterWorldCurrencies(e.target.value);
         });
 
         // Currency selector button
@@ -700,11 +754,17 @@ class GoogleDriveBackup {
 
                         // Check if user has workspace
                         const savedWorkspace = localStorage.getItem('workspace_id');
+                        const pendingInvitation = sessionStorage.getItem('pending_workspace_invitation');
+
                         if (savedWorkspace) {
                             this.workspaceId = savedWorkspace;
                             this.updateBackupFilename();
                             this.showApp();
                             this.displayWorkspaceCode();
+                        } else if (pendingInvitation) {
+                            // User signed in via invitation link - show join form
+                            sessionStorage.removeItem('pending_workspace_invitation');
+                            this.showWorkspaceGateWithInvitation(pendingInvitation);
                         } else {
                             // Show workspace selection
                             this.showWorkspaceGate();

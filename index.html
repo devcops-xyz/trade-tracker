@@ -81,32 +81,38 @@
         <!-- Dashboard Section -->
         <section class="dashboard">
             <h2>لوحة التحكم</h2>
-            <div class="profit-cards">
-                <div class="card daily">
-                    <div class="card-header">الربح اليومي</div>
-                    <div class="card-value" id="dailyProfit">0.00</div>
-                    <div class="card-footer">
-                        <span>واردات: <span id="dailyExports">0.00</span></span>
-                        <span>صادرات: <span id="dailyImports">0.00</span></span>
-                    </div>
+            <div class="profit-lines">
+                <div class="profit-line">
+                    <span class="period-label">اليومي:</span>
+                    <span id="dailyProfit" class="profit-value">0.00</span>
+                    <span class="line-separator">|</span>
+                    <span class="line-label">📤 واردات:</span>
+                    <span id="dailyExports" class="line-value">0.00</span>
+                    <span class="line-separator">|</span>
+                    <span class="line-label">📥 صادرات:</span>
+                    <span id="dailyImports" class="line-value">0.00</span>
                 </div>
 
-                <div class="card weekly">
-                    <div class="card-header">الربح الأسبوعي</div>
-                    <div class="card-value" id="weeklyProfit">0.00</div>
-                    <div class="card-footer">
-                        <span>واردات: <span id="weeklyExports">0.00</span></span>
-                        <span>صادرات: <span id="weeklyImports">0.00</span></span>
-                    </div>
+                <div class="profit-line">
+                    <span class="period-label">الأسبوعي:</span>
+                    <span id="weeklyProfit" class="profit-value">0.00</span>
+                    <span class="line-separator">|</span>
+                    <span class="line-label">📤 واردات:</span>
+                    <span id="weeklyExports" class="line-value">0.00</span>
+                    <span class="line-separator">|</span>
+                    <span class="line-label">📥 صادرات:</span>
+                    <span id="weeklyImports" class="line-value">0.00</span>
                 </div>
 
-                <div class="card monthly">
-                    <div class="card-header">الربح الشهري</div>
-                    <div class="card-value" id="monthlyProfit">0.00</div>
-                    <div class="card-footer">
-                        <span>واردات: <span id="monthlyExports">0.00</span></span>
-                        <span>صادرات: <span id="monthlyImports">0.00</span></span>
-                    </div>
+                <div class="profit-line">
+                    <span class="period-label">الشهري:</span>
+                    <span id="monthlyProfit" class="profit-value">0.00</span>
+                    <span class="line-separator">|</span>
+                    <span class="line-label">📤 واردات:</span>
+                    <span id="monthlyExports" class="line-value">0.00</span>
+                    <span class="line-separator">|</span>
+                    <span class="line-label">📥 صادرات:</span>
+                    <span id="monthlyImports" class="line-value">0.00</span>
                 </div>
             </div>
         </section>
@@ -339,14 +345,6 @@
                     <p class="settings-description">حدد العملات المستخدمة في مساحة العمل</p>
 
                     <div id="currenciesList" class="currencies-list"></div>
-
-                    <div class="currency-search-section">
-                        <h4>إضافة عملة من القائمة العالمية</h4>
-                        <input type="text" id="currencySearch" placeholder="🔍 ابحث عن عملة..." class="currency-search-input">
-                        <div id="worldCurrenciesList" class="world-currencies-list">
-                            <!-- Will be populated by JavaScript -->
-                        </div>
-                    </div>
 
                     <div class="default-currency-section">
                         <p class="settings-description">⭐ العملة الافتراضية المحددة حالياً: <strong id="currentDefaultCurrency">USD</strong></p>
