@@ -258,6 +258,98 @@
             </div>
         </section>
 
+        <!-- Admin Panel Section (Creator Only) -->
+        <section class="admin-panel" id="adminPanelSection" style="display: none;">
+            <h2>🛡️ لوحة التحكم الإدارية</h2>
+
+            <!-- Workspace Statistics -->
+            <div class="admin-stats">
+                <div class="admin-stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalMembers">0</div>
+                        <div class="stat-label">إجمالي الأعضاء</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalTransactions">0</div>
+                        <div class="stat-label">إجمالي المعاملات</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-icon">💱</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalCurrencies">0</div>
+                        <div class="stat-label">العملات المفعلة</div>
+                    </div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalActivities">0</div>
+                        <div class="stat-label">أحداث النشاط</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced User Management -->
+            <div class="admin-section">
+                <h3>👥 إدارة المستخدمين المتقدمة</h3>
+                <div id="adminUsersList" class="admin-users-list">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Enhanced Activity Logs with Filtering -->
+            <div class="admin-section">
+                <div class="admin-section-header">
+                    <h3>📋 سجلات النشاط التفصيلية</h3>
+                    <div class="admin-log-controls">
+                        <button id="exportLogsBtn" class="btn-export-logs" title="تصدير السجلات">📥 تصدير</button>
+                        <button id="clearLogsBtn" class="btn-clear-logs" title="مسح السجلات">🗑️ مسح الكل</button>
+                    </div>
+                </div>
+
+                <!-- Log Filters -->
+                <div class="admin-log-filters">
+                    <select id="logUserFilter" class="admin-filter-select">
+                        <option value="">جميع المستخدمين</option>
+                    </select>
+                    <select id="logActionFilter" class="admin-filter-select">
+                        <option value="">جميع الأحداث</option>
+                        <option value="added">إضافة</option>
+                        <option value="modified">تعديل</option>
+                        <option value="deleted">حذف</option>
+                        <option value="joined">انضمام</option>
+                        <option value="created">إنشاء</option>
+                    </select>
+                    <select id="logTargetFilter" class="admin-filter-select">
+                        <option value="">جميع الأنواع</option>
+                        <option value="transaction">معاملة</option>
+                        <option value="member">عضو</option>
+                        <option value="workspace">مساحة عمل</option>
+                        <option value="comment">تعليق</option>
+                    </select>
+                    <input type="date" id="logDateFromFilter" class="admin-filter-date" placeholder="من تاريخ">
+                    <input type="date" id="logDateToFilter" class="admin-filter-date" placeholder="إلى تاريخ">
+                    <button id="applyLogFilters" class="btn-apply-log-filters">تطبيق</button>
+                    <button id="resetLogFilters" class="btn-reset-log-filters">إعادة تعيين</button>
+                </div>
+
+                <div id="adminActivityList" class="admin-activity-list">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <div class="admin-log-pagination">
+                    <button id="prevLogPage" class="btn-log-page">السابق</button>
+                    <span id="logPageInfo" class="log-page-info">صفحة 1 من 1</span>
+                    <button id="nextLogPage" class="btn-log-page">التالي</button>
+                </div>
+            </div>
+        </section>
+
         <!-- Activity Log Section -->
         <section class="activity-log" id="activityLogSection" style="display: none;">
             <div class="section-header">

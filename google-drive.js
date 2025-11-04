@@ -137,6 +137,11 @@ class GoogleDriveBackup {
         document.getElementById('signInGate').classList.remove('active');
         document.getElementById('workspaceGate').classList.remove('active');
         document.getElementById('appContent').style.display = 'block';
+
+        // Initialize admin panel if user is super admin
+        setTimeout(() => {
+            this.showAdminPanel();
+        }, 500);
     }
 
     generateWorkspaceId() {
@@ -721,6 +726,9 @@ class GoogleDriveBackup {
         if (typeof google !== 'undefined') {
             console.log('Google accounts available:', typeof google.accounts !== 'undefined');
         }
+
+        // Setup admin panel event listeners
+        this.setupAdminEventListeners();
     }
 
     signIn() {
@@ -751,6 +759,12 @@ class GoogleDriveBackup {
                         localStorage.setItem('gdrive_token', this.accessToken);
                         this.getUserInfo();
                         this.showStatus('تم تسجيل الدخول بنجاح ✓', 'success');
+
+                        // Close settings modal if open
+                        const settingsModal = document.getElementById('settingsModal');
+                        if (settingsModal) {
+                            settingsModal.classList.remove('active');
+                        }
 
                         // Check if user has workspace
                         const savedWorkspace = localStorage.getItem('workspace_id');
@@ -2182,6 +2196,401 @@ class GoogleDriveBackup {
         if (window.tracker) {
             window.tracker.showNotification(`✓ تمت إضافة ${code}`);
         }
+    }
+
+    // Phase 4: Developer/Super Admin Panel Features
+
+    // Super admin email - CHANGE THIS TO YOUR EMAIL
+    isSuperAdmin() {
+        const currentEmail = this.currentUserEmail || localStorage.getItem('gdrive_email');
+        const SUPER_ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com'; // <<<< CHANGE THIS TO YOUR EMAIL
+
+        return currentEmail === SUPER_ADMIN_EMAIL;
+    }
+
+    showAdminPanel() {
+        const adminPanel = document.getElementById('adminPanelSection');
+
+        if (!adminPanel) return;
+
+        // Only show admin panel for super admin (developer)
+        if (this.isSuperAdmin()) {
+            adminPanel.style.display = 'block';
+            this.updateAdminStatistics();
+            this.displayAdminUsers();
+            this.displayAdminActivityLogs();
+        } else {
+            adminPanel.style.display = 'none';
+        }
+    }
+
+    updateAdminStatistics() {
+        // Total members
+        const totalMembers = this.workspaceMembers.length;
+        document.getElementById('totalMembers').textContent = totalMembers;
+
+        // Total transactions
+        const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+        document.getElementById('totalTransactions').textContent = transactions.length;
+
+        // Total currencies
+        document.getElementById('totalCurrencies').textContent = this.workspaceCurrencies.length;
+
+        // Total activities
+        const activityLog = JSON.parse(localStorage.getItem('activity_log') || '[]');
+        document.getElementById('totalActivities').textContent = activityLog.length;
+    }
+
+    displayAdminUsers() {
+        const container = document.getElementById('adminUsersList');
+        if (!container) return;
+
+        const savedMembers = localStorage.getItem('workspace_members');
+        if (savedMembers) {
+            this.workspaceMembers = JSON.parse(savedMembers);
+        }
+
+        if (this.workspaceMembers.length === 0) {
+            container.innerHTML = '<p style="color: #808080; text-align: center; padding: 20px;">لا يوجد أعضاء</p>';
+            return;
+        }
+
+        container.innerHTML = this.workspaceMembers.map((member, index) => {
+            const joinedDate = new Date(member.joinedAt).toLocaleString('ar-EG', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+            const roleNames = { creator: 'منشئ', writer: 'كاتب', reader: 'قارئ' };
+            const isCreator = member.role === 'creator';
+            const isBlocked = member.blocked || false;
+
+            return `
+                <div class="admin-user-card ${isBlocked ? 'blocked' : ''}">
+                    <div class="admin-user-avatar">${member.email.charAt(0).toUpperCase()}</div>
+                    <div class="admin-user-info">
+                        <div class="admin-user-email">${member.email}</div>
+                        <div class="admin-user-meta">
+                            <span class="user-role-badge ${member.role}">${roleNames[member.role]}</span>
+                            <span class="user-joined-date">انضم ${joinedDate}</span>
+                            ${isBlocked ? '<span class="user-blocked-badge">🚫 محظور</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="admin-user-actions">
+                        ${!isCreator ? `
+                            <button class="btn-admin-action ${isBlocked ? 'btn-unblock' : 'btn-block'}"
+                                    onclick="window.driveBackup.toggleBlockUser(${index})"
+                                    title="${isBlocked ? 'إلغاء الحظر' : 'حظر المستخدم'}">
+                                ${isBlocked ? '✅ إلغاء الحظر' : '🚫 حظر'}
+                            </button>
+                            <button class="btn-admin-action btn-remove"
+                                    onclick="window.driveBackup.removeUser(${index})"
+                                    title="إزالة من مساحة العمل">
+                                🗑️ إزالة
+                            </button>
+                        ` : '<span class="creator-label">👑 مالك مساحة العمل</span>'}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    toggleBlockUser(index) {
+        const member = this.workspaceMembers[index];
+        const isCurrentlyBlocked = member.blocked || false;
+
+        if (!confirm(`هل تريد ${isCurrentlyBlocked ? 'إلغاء حظر' : 'حظر'} ${member.email}؟`)) {
+            return;
+        }
+
+        member.blocked = !isCurrentlyBlocked;
+        localStorage.setItem('workspace_members', JSON.stringify(this.workspaceMembers));
+
+        this.logActivity(
+            isCurrentlyBlocked ? 'unblocked' : 'blocked',
+            'member',
+            `${isCurrentlyBlocked ? 'Unblocked' : 'Blocked'} user ${member.email}`
+        );
+
+        this.displayAdminUsers();
+        this.autoBackup();
+
+        if (window.tracker) {
+            window.tracker.showNotification(`✓ تم ${isCurrentlyBlocked ? 'إلغاء حظر' : 'حظر'} ${member.email}`);
+        }
+    }
+
+    removeUser(index) {
+        const member = this.workspaceMembers[index];
+
+        if (!confirm(`⚠️ تحذير\n\nهل أنت متأكد من إزالة ${member.email} من مساحة العمل؟\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+            return;
+        }
+
+        this.workspaceMembers.splice(index, 1);
+        localStorage.setItem('workspace_members', JSON.stringify(this.workspaceMembers));
+
+        this.logActivity('removed', 'member', `Removed user ${member.email} from workspace`);
+
+        this.displayAdminUsers();
+        this.displayMemberManagement();
+        this.updateAdminStatistics();
+        this.autoBackup();
+
+        if (window.tracker) {
+            window.tracker.showNotification(`✓ تم إزالة ${member.email} من مساحة العمل`);
+        }
+    }
+
+    displayAdminActivityLogs() {
+        const container = document.getElementById('adminActivityList');
+        if (!container) return;
+
+        // Load activity log
+        const savedLog = localStorage.getItem('activity_log');
+        this.activityLog = savedLog ? JSON.parse(savedLog) : [];
+
+        // Populate user filter
+        this.populateAdminLogFilters();
+
+        // Display logs (initially unfiltered)
+        this.currentLogPage = 1;
+        this.logsPerPage = 50;
+        this.filteredActivityLog = [...this.activityLog];
+        this.renderAdminActivityLogs();
+    }
+
+    populateAdminLogFilters() {
+        const userFilter = document.getElementById('logUserFilter');
+        if (!userFilter) return;
+
+        // Get unique users from activity log
+        const uniqueUsers = [...new Set(this.activityLog.map(a => a.user))];
+
+        const currentValue = userFilter.value;
+        userFilter.innerHTML = '<option value="">جميع المستخدمين</option>' +
+            uniqueUsers.map(user => `<option value="${user}">${user}</option>`).join('');
+        userFilter.value = currentValue;
+    }
+
+    renderAdminActivityLogs() {
+        const container = document.getElementById('adminActivityList');
+        if (!container) return;
+
+        if (this.filteredActivityLog.length === 0) {
+            container.innerHTML = '<p style="color: #808080; text-align: center; padding: 30px;">لا توجد سجلات</p>';
+            this.updateAdminLogPagination();
+            return;
+        }
+
+        const startIndex = (this.currentLogPage - 1) * this.logsPerPage;
+        const endIndex = startIndex + this.logsPerPage;
+        const pageItems = this.filteredActivityLog.slice(startIndex, endIndex);
+
+        container.innerHTML = pageItems.map(activity => {
+            const time = new Date(activity.timestamp);
+            const formattedTime = time.toLocaleString('ar-EG', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const relativeTime = this.getRelativeTime(time);
+
+            const actionIcons = {
+                'added': '➕',
+                'modified': '✏️',
+                'deleted': '🗑️',
+                'joined': '🚪',
+                'created': '🆕',
+                'blocked': '🚫',
+                'unblocked': '✅',
+                'removed': '❌'
+            };
+            const icon = actionIcons[activity.action] || '📝';
+
+            return `
+                <div class="admin-log-item action-${activity.action}">
+                    <div class="log-icon">${icon}</div>
+                    <div class="log-details">
+                        <div class="log-user">${activity.user}</div>
+                        <div class="log-description">${activity.description}</div>
+                        <div class="log-meta">
+                            <span class="log-type">${activity.targetType}</span>
+                            <span class="log-time" title="${formattedTime}">${relativeTime}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        this.updateAdminLogPagination();
+    }
+
+    updateAdminLogPagination() {
+        const totalPages = Math.ceil(this.filteredActivityLog.length / this.logsPerPage);
+        const pageInfo = document.getElementById('logPageInfo');
+        const prevBtn = document.getElementById('prevLogPage');
+        const nextBtn = document.getElementById('nextLogPage');
+
+        if (pageInfo) {
+            pageInfo.textContent = `صفحة ${this.currentLogPage} من ${totalPages || 1}`;
+        }
+
+        if (prevBtn) {
+            prevBtn.disabled = this.currentLogPage === 1;
+        }
+
+        if (nextBtn) {
+            nextBtn.disabled = this.currentLogPage === totalPages || totalPages === 0;
+        }
+    }
+
+    applyAdminLogFilters() {
+        const userFilter = document.getElementById('logUserFilter').value;
+        const actionFilter = document.getElementById('logActionFilter').value;
+        const targetFilter = document.getElementById('logTargetFilter').value;
+        const dateFromFilter = document.getElementById('logDateFromFilter').value;
+        const dateToFilter = document.getElementById('logDateToFilter').value;
+
+        this.filteredActivityLog = this.activityLog.filter(activity => {
+            if (userFilter && activity.user !== userFilter) return false;
+            if (actionFilter && activity.action !== actionFilter) return false;
+            if (targetFilter && activity.targetType !== targetFilter) return false;
+
+            const activityDate = new Date(activity.timestamp);
+            if (dateFromFilter) {
+                const fromDate = new Date(dateFromFilter);
+                if (activityDate < fromDate) return false;
+            }
+            if (dateToFilter) {
+                const toDate = new Date(dateToFilter);
+                toDate.setHours(23, 59, 59);
+                if (activityDate > toDate) return false;
+            }
+
+            return true;
+        });
+
+        this.currentLogPage = 1;
+        this.renderAdminActivityLogs();
+
+        if (window.tracker) {
+            window.tracker.showNotification(`✓ تم تطبيق الفلاتر: ${this.filteredActivityLog.length} سجل`);
+        }
+    }
+
+    resetAdminLogFilters() {
+        document.getElementById('logUserFilter').value = '';
+        document.getElementById('logActionFilter').value = '';
+        document.getElementById('logTargetFilter').value = '';
+        document.getElementById('logDateFromFilter').value = '';
+        document.getElementById('logDateToFilter').value = '';
+
+        this.filteredActivityLog = [...this.activityLog];
+        this.currentLogPage = 1;
+        this.renderAdminActivityLogs();
+
+        if (window.tracker) {
+            window.tracker.showNotification('✓ تم إعادة تعيين الفلاتر');
+        }
+    }
+
+    exportAdminLogs() {
+        if (this.activityLog.length === 0) {
+            alert('لا توجد سجلات لتصديرها');
+            return;
+        }
+
+        // Convert to CSV
+        const headers = ['الوقت', 'المستخدم', 'الحدث', 'النوع', 'الوصف'];
+        const rows = this.activityLog.map(activity => [
+            new Date(activity.timestamp).toLocaleString('ar-EG'),
+            activity.user,
+            activity.action,
+            activity.targetType,
+            activity.description
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        // Download
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `activity-log-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+
+        if (window.tracker) {
+            window.tracker.showNotification('✓ تم تصدير السجلات');
+        }
+    }
+
+    clearAdminLogs() {
+        if (!confirm('⚠️ تحذير\n\nهل أنت متأكد من حذف جميع السجلات؟\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
+            return;
+        }
+
+        if (!confirm('هل أنت متأكد 100%؟ سيتم حذف جميع سجلات النشاط نهائياً!')) {
+            return;
+        }
+
+        this.activityLog = [];
+        localStorage.setItem('activity_log', JSON.stringify(this.activityLog));
+
+        this.filteredActivityLog = [];
+        this.renderAdminActivityLogs();
+        this.updateAdminStatistics();
+        this.autoBackup();
+
+        if (window.tracker) {
+            window.tracker.showNotification('✓ تم حذف جميع السجلات');
+        }
+    }
+
+    nextLogPage() {
+        const totalPages = Math.ceil(this.filteredActivityLog.length / this.logsPerPage);
+        if (this.currentLogPage < totalPages) {
+            this.currentLogPage++;
+            this.renderAdminActivityLogs();
+        }
+    }
+
+    prevLogPage() {
+        if (this.currentLogPage > 1) {
+            this.currentLogPage--;
+            this.renderAdminActivityLogs();
+        }
+    }
+
+    // Initialize admin panel event listeners
+    setupAdminEventListeners() {
+        // Apply log filters button
+        const applyLogFiltersBtn = document.getElementById('applyLogFilters');
+        applyLogFiltersBtn?.addEventListener('click', () => this.applyAdminLogFilters());
+
+        // Reset log filters button
+        const resetLogFiltersBtn = document.getElementById('resetLogFilters');
+        resetLogFiltersBtn?.addEventListener('click', () => this.resetAdminLogFilters());
+
+        // Export logs button
+        const exportLogsBtn = document.getElementById('exportLogsBtn');
+        exportLogsBtn?.addEventListener('click', () => this.exportAdminLogs());
+
+        // Clear logs button
+        const clearLogsBtn = document.getElementById('clearLogsBtn');
+        clearLogsBtn?.addEventListener('click', () => this.clearAdminLogs());
+
+        // Pagination buttons
+        const prevLogPageBtn = document.getElementById('prevLogPage');
+        prevLogPageBtn?.addEventListener('click', () => this.prevLogPage());
+
+        const nextLogPageBtn = document.getElementById('nextLogPage');
+        nextLogPageBtn?.addEventListener('click', () => this.nextLogPage());
     }
 }
 
