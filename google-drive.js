@@ -67,6 +67,7 @@ class GoogleDriveBackup {
     }
 
     async validateSavedToken(savedWorkspace, invitationCode, savedEmail) {
+        console.log('🔍 Validating saved token...');
         try {
             // Try to validate token with a simple API call
             const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
@@ -75,7 +76,7 @@ class GoogleDriveBackup {
 
             if (response.status === 401) {
                 // Token is expired, clear it and show sign-in
-                console.log('Saved token expired, clearing...');
+                console.log('❌ Saved token expired, clearing and showing sign-in gate...');
                 localStorage.removeItem('gdrive_token');
                 localStorage.removeItem('gdrive_email');
                 this.accessToken = null;
@@ -86,6 +87,7 @@ class GoogleDriveBackup {
 
             if (response.ok) {
                 // Token is valid, now update UI and continue with normal flow
+                console.log('✅ Token is valid, continuing...');
                 this.updateUISignedIn(savedEmail);
 
                 if (savedWorkspace) {
@@ -806,8 +808,10 @@ class GoogleDriveBackup {
                     }
 
                     if (response.access_token) {
+                        console.log('✅ Got fresh access token from OAuth');
                         this.accessToken = response.access_token;
                         localStorage.setItem('gdrive_token', this.accessToken);
+                        console.log('📞 Calling getUserInfo with isFreshSignIn=true');
                         this.getUserInfo(true); // Pass true to indicate fresh sign-in
                         this.showStatus('تم تسجيل الدخول بنجاح ✓', 'success');
 
@@ -845,21 +849,24 @@ class GoogleDriveBackup {
     }
 
     async getUserInfo(isFreshSignIn = false) {
+        console.log(`📧 getUserInfo called with isFreshSignIn=${isFreshSignIn}`);
         try {
             const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
                 headers: { Authorization: `Bearer ${this.accessToken}` }
             });
 
+            console.log(`📨 getUserInfo response status: ${response.status}`);
+
             if (response.status === 401) {
                 // Only sign out if this is NOT a fresh sign-in
                 // Fresh sign-ins should never have expired tokens
                 if (!isFreshSignIn) {
-                    console.log('Token expired, signing out...');
+                    console.log('❌ Token expired (saved token), signing out...');
                     this.signOut();
                     return;
                 } else {
                     // Fresh sign-in with 401 is unexpected, log but don't sign out yet
-                    console.error('Fresh sign-in returned 401 - token might not be ready yet');
+                    console.warn('⚠️ Fresh sign-in returned 401 - token might not be ready yet, retrying...');
                     // Retry once after a short delay
                     await new Promise(resolve => setTimeout(resolve, 500));
                     const retryResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
