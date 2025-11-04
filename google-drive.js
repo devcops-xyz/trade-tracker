@@ -1716,6 +1716,9 @@ class GoogleDriveBackup {
             // Clear all local storage
             localStorage.clear();
 
+            // Clear session storage
+            sessionStorage.clear();
+
             // Reset all variables
             this.accessToken = null;
             this.fileId = null;
