@@ -1601,6 +1601,14 @@ class GoogleDriveBackup {
             return;
         }
 
+        // Disable all delete buttons to prevent multiple clicks
+        const deleteButtons = document.querySelectorAll('.btn-delete-backup');
+        deleteButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        });
+
         try {
             this.showStatus('جاري الحذف...', 'info');
 
@@ -1634,12 +1642,28 @@ class GoogleDriveBackup {
             } else if (response.status === 403) {
                 this.showStatus('❌ لا يمكن حذف هذه النسخة (آخر نسخة محفوظة)', 'error');
                 alert('⚠️ لا يمكن حذف آخر نسخة احتياطية متبقية\n\nيجب الاحتفاظ بنسخة واحدة على الأقل في Google Drive.\n\nإذا كنت تريد حذف جميع النسخ، احذف الملف بالكامل من Google Drive مباشرة.');
+
+                // Re-enable delete buttons since operation failed
+                const deleteButtons = document.querySelectorAll('.btn-delete-backup');
+                deleteButtons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                });
             } else {
                 throw new Error(`Failed to delete: ${response.status}`);
             }
         } catch (error) {
             console.error('❌ Error deleting revision:', error);
             this.showStatus('فشل حذف النسخة الاحتياطية ✗', 'error');
+
+            // Re-enable delete buttons on error
+            const deleteButtons = document.querySelectorAll('.btn-delete-backup');
+            deleteButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.cursor = 'pointer';
+            });
         }
     }
 

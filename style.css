@@ -1592,21 +1592,249 @@ h2 {
 
 /* Extra small devices */
 @media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+
     header h1 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
+    }
+
+    .subtitle {
+        font-size: 0.85rem;
+    }
+
+    section {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+
+    h2 {
+        font-size: 1.1rem;
+    }
+
+    .card {
+        padding: 12px;
+    }
+
+    .card-header {
+        font-size: 0.95rem;
     }
 
     .card-value {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
+    }
+
+    .card-footer {
+        font-size: 0.8rem;
     }
 
     .workspace-code {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         letter-spacing: 1px;
+    }
+
+    .workspace-code-large {
+        font-size: 1.3rem;
+        letter-spacing: 2px;
     }
 
     .transaction-item {
         padding: 10px;
+    }
+
+    .transaction-type {
+        font-size: 0.95rem;
+    }
+
+    .transaction-description {
+        font-size: 0.85rem;
+    }
+
+    .transaction-amount {
+        font-size: 1.1rem;
+    }
+
+    .btn-submit {
+        padding: 14px;
+        font-size: 0.95rem;
+    }
+
+    .btn-settings,
+    .btn-view-charts {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+    }
+
+    .form-group input {
+        padding: 10px;
+        font-size: 15px;
+    }
+
+    .radio-custom {
+        padding: 10px;
+        font-size: 0.85rem;
+    }
+
+    .modal-header {
+        padding: 12px 15px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .modal-body {
+        padding: 12px;
+    }
+
+    .settings-section h3 {
+        font-size: 1rem;
+    }
+
+    .settings-description {
+        font-size: 0.8rem;
+    }
+
+    .currency-item {
+        padding: 10px 12px;
+    }
+
+    .currency-code {
+        font-size: 0.9rem;
+    }
+
+    .currency-name {
+        font-size: 0.8rem;
+    }
+
+    .btn-modal-primary,
+    .btn-modal-secondary,
+    .btn-modal-danger {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+
+    .backup-item {
+        padding: 10px;
+    }
+
+    .backup-item-date {
+        font-size: 0.85rem;
+    }
+
+    .backup-item-count {
+        font-size: 0.8rem;
+    }
+
+    .btn-restore-backup,
+    .btn-delete-backup {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+
+    .user-email-badge {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+    }
+
+    .workspace-badge {
+        padding: 8px 12px;
+    }
+
+    .workspace-label {
+        font-size: 0.8rem;
+    }
+
+    .btn-share,
+    .btn-sync,
+    .btn-leave {
+        font-size: 1.1rem;
+        padding: 4px;
+    }
+
+    .sync-status {
+        font-size: 0.7rem;
+    }
+
+    .member-card {
+        padding: 12px 15px;
+    }
+
+    .member-icon {
+        font-size: 1.5rem;
+        width: 42px;
+        height: 42px;
+    }
+
+    .member-email {
+        font-size: 0.9rem;
+    }
+
+    .member-joined {
+        font-size: 0.75rem;
+    }
+
+    .code-copy-container {
+        padding: 12px 15px;
+    }
+
+    .btn-copy-code {
+        padding: 8px 16px;
+        font-size: 1rem;
+    }
+
+    .invite-section {
+        padding: 15px;
+    }
+
+    .currency-profit-card {
+        padding: 15px;
+    }
+
+    .currency-icon {
+        font-size: 1.5rem;
+        width: 48px;
+        height: 48px;
+    }
+
+    .currency-profit-name {
+        font-size: 1rem;
+    }
+
+    .currency-profit-amount {
+        font-size: 1.4rem;
+    }
+
+    .quick-add-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+
+    .search-input {
+        min-width: 100%;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+
+    .btn-filter,
+    .sort-select {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .empty-state p {
+        font-size: 1rem;
+    }
+
+    .empty-subtitle {
+        font-size: 0.8rem;
     }
 }
 
