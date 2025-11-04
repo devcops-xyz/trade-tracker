@@ -2200,10 +2200,10 @@ class GoogleDriveBackup {
 
     // Phase 4: Developer/Super Admin Panel Features
 
-    // Super admin email - CHANGE THIS TO YOUR EMAIL
+    // Super admin email
     isSuperAdmin() {
         const currentEmail = this.currentUserEmail || localStorage.getItem('gdrive_email');
-        const SUPER_ADMIN_EMAIL = 'YOUR_EMAIL@gmail.com'; // <<<< CHANGE THIS TO YOUR EMAIL
+        const SUPER_ADMIN_EMAIL = 'khaled.alhasan4@gmail.com';
 
         return currentEmail === SUPER_ADMIN_EMAIL;
     }

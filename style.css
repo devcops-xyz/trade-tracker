@@ -163,6 +163,35 @@ h2 {
     color: var(--import);
 }
 
+/* Profit Details Button */
+.btn-profit-details {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: 8px;
+    color: var(--text-secondary);
+}
+
+.btn-profit-details:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    transform: scale(1.1);
+}
+
+.btn-profit-details svg {
+    width: 14px;
+    height: 14px;
+}
+
 /* Dashboard Actions */
 .dashboard-header {
     display: flex;
@@ -558,6 +587,69 @@ h2 {
 
 .modal-body {
     padding: 16px;
+}
+
+/* Profit Details Modal */
+.profit-details-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.profit-detail-section {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px;
+}
+
+.profit-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.profit-detail-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.profit-detail-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.profit-detail-value.export-color {
+    color: var(--export);
+}
+
+.profit-detail-value.import-color {
+    color: var(--import);
+}
+
+.profit-detail-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+}
+
+.profit-detail-row.profit-total {
+    padding: 12px 0;
+    border-top: 2px solid var(--border);
+}
+
+.profit-detail-row.profit-total .profit-detail-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.profit-detail-row.profit-total .profit-detail-value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
 }
 
 .backup-section, .settings-section {

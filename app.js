@@ -153,6 +153,20 @@ class TradeTracker {
             }, 500);
         });
 
+        // Profit Details Modal
+        const closeProfitDetailsBtn = document.getElementById('closeProfitDetailsModal');
+        const profitDetailsModal = document.getElementById('profitDetailsModal');
+
+        closeProfitDetailsBtn?.addEventListener('click', () => {
+            profitDetailsModal.classList.remove('active');
+        });
+
+        profitDetailsModal?.addEventListener('click', (e) => {
+            if (e.target === profitDetailsModal) {
+                profitDetailsModal.classList.remove('active');
+            }
+        });
+
         // Reports Modal
         const openReportsBtn = document.getElementById('openReportsBtn');
         const closeReportsBtn = document.getElementById('closeReportsModal');
@@ -509,8 +523,14 @@ class TradeTracker {
         const profitElement = document.getElementById(`${period}Profit`);
         const exportsElement = document.getElementById(`${period}Exports`);
         const importsElement = document.getElementById(`${period}Imports`);
+        const detailsBtn = document.getElementById(`${period}DetailsBtn`);
+        const profitLine = document.getElementById(`${period}ProfitLine`);
 
         const currencies = Object.keys(byCurrency);
+
+        // Store data for modal
+        if (!this.profitData) this.profitData = {};
+        this.profitData[period] = byCurrency;
 
         if (currencies.length === 0) {
             // No transactions
@@ -518,6 +538,7 @@ class TradeTracker {
             exportsElement.innerHTML = '0.00';
             importsElement.innerHTML = '0.00';
             profitElement.classList.remove('profit', 'loss');
+            if (detailsBtn) detailsBtn.style.display = 'none';
             return;
         }
 
@@ -550,6 +571,69 @@ class TradeTracker {
         } else if (hasLoss && !hasProfit) {
             profitElement.classList.add('loss');
         }
+
+        // Check for overflow and show/hide details button
+        setTimeout(() => this.checkProfitOverflow(period), 100);
+    }
+
+    checkProfitOverflow(period) {
+        const profitElement = document.getElementById(`${period}Profit`);
+        const profitLine = document.getElementById(`${period}ProfitLine`);
+        const detailsBtn = document.getElementById(`${period}DetailsBtn`);
+
+        if (!profitElement || !profitLine || !detailsBtn) return;
+
+        // Check if content is overflowing or wrapping to multiple lines
+        const isOverflowing = profitElement.scrollHeight > profitElement.clientHeight + 5 ||
+                             profitElement.scrollWidth > profitElement.clientWidth + 5;
+
+        if (isOverflowing) {
+            detailsBtn.style.display = 'flex';
+        } else {
+            detailsBtn.style.display = 'none';
+        }
+    }
+
+    showProfitDetails(period) {
+        const modal = document.getElementById('profitDetailsModal');
+        const title = document.getElementById('profitDetailsTitle');
+        const exportsEl = document.getElementById('detailExports');
+        const importsEl = document.getElementById('detailImports');
+        const profitEl = document.getElementById('detailProfit');
+
+        if (!modal || !this.profitData || !this.profitData[period]) return;
+
+        const periodNames = {
+            'daily': 'اليومي',
+            'weekly': 'الأسبوعي',
+            'monthly': 'الشهري'
+        };
+
+        title.textContent = `تفاصيل الربح ${periodNames[period] || ''}`;
+
+        const byCurrency = this.profitData[period];
+        const currencies = Object.keys(byCurrency);
+
+        // Build detailed strings
+        const exportsHTML = currencies.map(currency => {
+            return `${byCurrency[currency].exports.toFixed(2)} ${currency}`;
+        }).join('<br>');
+
+        const importsHTML = currencies.map(currency => {
+            return `${byCurrency[currency].imports.toFixed(2)} ${currency}`;
+        }).join('<br>');
+
+        const profitHTML = currencies.map(currency => {
+            const data = byCurrency[currency];
+            const profitClass = data.profit >= 0 ? 'profit' : 'loss';
+            return `<span class="${profitClass}">${data.profit.toFixed(2)} ${currency}</span>`;
+        }).join('<br>');
+
+        exportsEl.innerHTML = exportsHTML;
+        importsEl.innerHTML = importsHTML;
+        profitEl.innerHTML = profitHTML;
+
+        modal.classList.add('active');
     }
 
     saveTransactions() {

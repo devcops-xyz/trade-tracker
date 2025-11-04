@@ -82,37 +82,46 @@
         <section class="dashboard">
             <h2>لوحة التحكم</h2>
             <div class="profit-lines">
-                <div class="profit-line">
+                <div class="profit-line" id="dailyProfitLine">
                     <span class="period-label">اليومي:</span>
                     <span id="dailyProfit" class="profit-value">0.00</span>
-                    <span class="line-separator">|</span>
-                    <span class="line-label">📤 واردات:</span>
-                    <span id="dailyExports" class="line-value">0.00</span>
-                    <span class="line-separator">|</span>
-                    <span class="line-label">📥 صادرات:</span>
-                    <span id="dailyImports" class="line-value">0.00</span>
+                    <button class="btn-profit-details" id="dailyDetailsBtn" style="display: none;" title="عرض التفاصيل" onclick="tracker.showProfitDetails('daily')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                    </button>
+                    <span id="dailyExports" class="line-value" style="display: none;"></span>
+                    <span id="dailyImports" class="line-value" style="display: none;"></span>
                 </div>
 
-                <div class="profit-line">
+                <div class="profit-line" id="weeklyProfitLine">
                     <span class="period-label">الأسبوعي:</span>
                     <span id="weeklyProfit" class="profit-value">0.00</span>
-                    <span class="line-separator">|</span>
-                    <span class="line-label">📤 واردات:</span>
-                    <span id="weeklyExports" class="line-value">0.00</span>
-                    <span class="line-separator">|</span>
-                    <span class="line-label">📥 صادرات:</span>
-                    <span id="weeklyImports" class="line-value">0.00</span>
+                    <button class="btn-profit-details" id="weeklyDetailsBtn" style="display: none;" title="عرض التفاصيل" onclick="tracker.showProfitDetails('weekly')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                    </button>
+                    <span id="weeklyExports" class="line-value" style="display: none;"></span>
+                    <span id="weeklyImports" class="line-value" style="display: none;"></span>
                 </div>
 
-                <div class="profit-line">
+                <div class="profit-line" id="monthlyProfitLine">
                     <span class="period-label">الشهري:</span>
                     <span id="monthlyProfit" class="profit-value">0.00</span>
-                    <span class="line-separator">|</span>
-                    <span class="line-label">📤 واردات:</span>
-                    <span id="monthlyExports" class="line-value">0.00</span>
-                    <span class="line-separator">|</span>
-                    <span class="line-label">📥 صادرات:</span>
-                    <span id="monthlyImports" class="line-value">0.00</span>
+                    <button class="btn-profit-details" id="monthlyDetailsBtn" style="display: none;" title="عرض التفاصيل" onclick="tracker.showProfitDetails('monthly')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                        </svg>
+                    </button>
+                    <span id="monthlyExports" class="line-value" style="display: none;"></span>
+                    <span id="monthlyImports" class="line-value" style="display: none;"></span>
                 </div>
             </div>
         </section>
@@ -461,6 +470,35 @@
                             🚨 حذف الحساب والبيانات المحلية
                         </button>
                         <p class="danger-warning">⚠️ سيتم حذف جميع البيانات المحلية والخروج من الحساب</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profit Details Modal -->
+    <div id="profitDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="profitDetailsTitle">تفاصيل الربح</h2>
+                <button class="modal-close" id="closeProfitDetailsModal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="profit-details-content">
+                    <div class="profit-detail-section">
+                        <div class="profit-detail-row">
+                            <span class="profit-detail-label">📤 واردات:</span>
+                            <span id="detailExports" class="profit-detail-value export-color"></span>
+                        </div>
+                        <div class="profit-detail-row">
+                            <span class="profit-detail-label">📥 صادرات:</span>
+                            <span id="detailImports" class="profit-detail-value import-color"></span>
+                        </div>
+                        <div class="profit-detail-divider"></div>
+                        <div class="profit-detail-row profit-total">
+                            <span class="profit-detail-label">💰 الربح الصافي:</span>
+                            <span id="detailProfit" class="profit-detail-value"></span>
+                        </div>
                     </div>
                 </div>
             </div>
