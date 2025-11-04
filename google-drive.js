@@ -142,6 +142,11 @@ class GoogleDriveBackup {
         // Initialize admin panel if user is super admin
         setTimeout(() => {
             this.showAdminPanel();
+
+            // If super admin, hide all regular app sections
+            if (this.isSuperAdmin()) {
+                this.hideRegularAppForAdmin();
+            }
         }, 500);
     }
 
@@ -2235,6 +2240,27 @@ class GoogleDriveBackup {
         } else {
             adminPanel.style.display = 'none';
         }
+    }
+
+    hideRegularAppForAdmin() {
+        // Hide all regular app sections for super admin
+        const sectionsToHide = [
+            'dashboard',
+            'add-transaction',
+            'transactions-list',
+            'activityLogSection'
+        ];
+
+        sectionsToHide.forEach(className => {
+            const sections = document.querySelectorAll(`.${className}`);
+            sections.forEach(section => {
+                section.style.display = 'none';
+            });
+        });
+
+        // Also hide the quick add button
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        if (quickAddBtn) quickAddBtn.style.display = 'none';
     }
 
     updateAdminStatistics() {
