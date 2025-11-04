@@ -26,9 +26,9 @@ class GoogleDriveBackup {
     }
 
     hideBackupControls() {
-        const backupControls = document.querySelector('.backup-controls');
-        if (backupControls) {
-            backupControls.style.display = 'none';
+        const settingsControls = document.querySelector('.settings-controls');
+        if (settingsControls) {
+            settingsControls.style.display = 'none';
         }
     }
 
@@ -296,10 +296,7 @@ class GoogleDriveBackup {
     }
 
     displayWorkspaceCode() {
-        const codeEl = document.getElementById('currentWorkspaceCode');
-        if (codeEl && this.workspaceId) {
-            codeEl.textContent = this.workspaceId;
-        }
+        // Workspace code is no longer displayed in header - it's inside settings
         this.displayWorkspaceRole();
         this.displayLastSync();
         this.updateLeaveButtonVisibility();
@@ -565,24 +562,25 @@ class GoogleDriveBackup {
             this.leaveWorkspace();
         });
 
-        // Workspace Settings Modal controls
-        const openWorkspaceSettingsBtn = document.getElementById('openWorkspaceSettings');
-        const closeWorkspaceSettingsBtn = document.getElementById('closeWorkspaceSettingsModal');
-        const workspaceSettingsModal = document.getElementById('workspaceSettingsModal');
+        // Settings Modal controls
+        const openSettingsBtn = document.getElementById('openSettings');
+        const closeSettingsBtn = document.getElementById('closeSettingsModal');
+        const settingsModal = document.getElementById('settingsModal');
 
-        openWorkspaceSettingsBtn?.addEventListener('click', () => {
-            workspaceSettingsModal.classList.add('active');
+        openSettingsBtn?.addEventListener('click', () => {
+            settingsModal.classList.add('active');
             this.loadCurrencies();
             this.displayWorldCurrencies();
+            this.displayMemberManagement();
         });
 
-        closeWorkspaceSettingsBtn?.addEventListener('click', () => {
-            workspaceSettingsModal.classList.remove('active');
+        closeSettingsBtn?.addEventListener('click', () => {
+            settingsModal.classList.remove('active');
         });
 
-        workspaceSettingsModal?.addEventListener('click', (e) => {
-            if (e.target === workspaceSettingsModal) {
-                workspaceSettingsModal.classList.remove('active');
+        settingsModal?.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('active');
             }
         });
 
@@ -645,25 +643,7 @@ class GoogleDriveBackup {
             }
         });
 
-        // Modal controls
-        const openModalBtn = document.getElementById('openBackupSettings');
-        const closeModalBtn = document.getElementById('closeBackupModal');
-        const modal = document.getElementById('backupModal');
-
-        openModalBtn?.addEventListener('click', () => {
-            modal.classList.add('active');
-        });
-
-        closeModalBtn?.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-
-        // Close on outside click
-        modal?.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.classList.remove('active');
-            }
-        });
+        // Backup modal is removed - all backup controls are in settings modal now
 
         // Google Drive controls
         const signInBtn = document.getElementById('signInBtn');

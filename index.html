@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f0f23">
-    <title>متتبع التجارة - Trade Tracker</title>
+    <title>إدارة التجارة - TradeFlow</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -16,9 +16,9 @@
     <!-- Sign-in Gate Modal -->
     <div id="signInGate" class="sign-in-gate active">
         <div class="sign-in-content">
-            <div class="sign-in-icon">🔐</div>
-            <h1>متتبع الصادرات والواردات</h1>
-            <p class="sign-in-description">سجل الدخول بحساب Google لبدء استخدام التطبيق</p>
+            <div class="sign-in-icon">💼</div>
+            <h1>إدارة التجارة</h1>
+            <p class="sign-in-description">نظام متكامل لتتبع الصادرات والواردات وإدارة الأرباح</p>
             <p class="sign-in-note">سيتم حفظ بياناتك تلقائياً في Google Drive الخاص بك</p>
             <button id="signInGateBtn" class="btn-sign-in-gate">
                 <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
@@ -69,25 +69,8 @@
 
     <div class="container" id="appContent" style="display: none;">
         <header>
-            <div class="header-top">
-                <div>
-                    <h1>📊 متتبع التجارة</h1>
-                    <p class="subtitle">تتبع الصادرات والواردات وحساب الأرباح</p>
-                </div>
-                <div class="workspace-info">
-                    <div class="workspace-badge">
-                        <span class="workspace-label">مساحة العمل:</span>
-                        <span class="workspace-code" id="currentWorkspaceCode">----</span>
-                        <span class="workspace-role-badge" id="workspaceRole"></span>
-                        <button id="shareWorkspaceBtn" class="btn-share" title="مشاركة مساحة العمل">📋</button>
-                        <button id="syncWorkspaceBtn" class="btn-sync" title="تحديث من Drive">
-                            🔄
-                        </button>
-                        <button id="leaveWorkspaceBtn" class="btn-leave" title="مغادرة مساحة العمل">🚪</button>
-                    </div>
-                    <div class="sync-status" id="syncStatus"></div>
-                </div>
-            </div>
+            <h1>💼 TradeFlow</h1>
+            <p class="subtitle">نظام إدارة الصادرات والواردات</p>
 
             <!-- Unified Settings Button -->
             <div class="settings-controls">
@@ -101,7 +84,6 @@
                 <h2>لوحة التحكم</h2>
                 <div class="dashboard-actions">
                     <button id="openChartsBtn" class="btn-view-charts">📈 عرض الرسوم البيانية</button>
-                    <button id="openReportsBtn" class="btn-view-reports">📊 التقارير التفصيلية</button>
                 </div>
             </div>
             <div class="profit-cards">
@@ -329,6 +311,21 @@
             </div>
 
             <div class="modal-body">
+                <!-- Workspace Info Section -->
+                <div class="settings-section">
+                    <h3>👥 معلومات مساحة العمل</h3>
+                    <div class="workspace-badge">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                            <span class="workspace-role-badge" id="workspaceRole"></span>
+                            <div style="display: flex; gap: 8px;">
+                                <button id="syncWorkspaceBtn" class="btn-sync" title="تحديث من Drive">🔄</button>
+                                <button id="leaveWorkspaceBtn" class="btn-leave" title="مغادرة مساحة العمل">🚪</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sync-status" id="syncStatus"></div>
+                </div>
+
                 <!-- Google Drive Backup Section -->
                 <div class="settings-section">
                     <h3>☁️ Google Drive</h3>
@@ -352,22 +349,6 @@
                     </div>
 
                     <div id="backupStatus" class="backup-status"></div>
-                </div>
-
-                <!-- Workspace Invitation Section -->
-                <div class="settings-section">
-                    <h3>📧 دعوة الأعضاء</h3>
-                    <p class="settings-description">شارك رمز مساحة العمل مع فريقك</p>
-                    <div class="invite-section">
-                        <div class="workspace-code-display">
-                            <label>رمز مساحة العمل:</label>
-                            <div class="code-copy-container">
-                                <span class="workspace-code-large" id="settingsWorkspaceCode">----</span>
-                                <button id="copyWorkspaceCode" class="btn-copy-code" title="نسخ الرمز">📋</button>
-                            </div>
-                        </div>
-                        <p class="settings-note">شارك هذا الرمز مع الأعضاء الجدد للانضمام لمساحة العمل</p>
-                    </div>
                 </div>
 
                 <!-- Member Management Section (Creator Only) -->
@@ -410,75 +391,6 @@
                             🗑️ حذف النسخة الاحتياطية من Drive
                         </button>
                         <p class="danger-warning">⚠️ سيتم حذف جميع البيانات المحفوظة على Google Drive</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reports Modal -->
-    <div id="reportsModal" class="modal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h2>📊 التقارير التفصيلية</h2>
-                <button class="modal-close" id="closeReportsModal">✕</button>
-            </div>
-
-            <div class="modal-body">
-                <!-- Profit by Currency Section -->
-                <div class="report-section">
-                    <h3>💰 الأرباح حسب العملة</h3>
-                    <p class="report-description">عرض تفصيلي للأرباح والخسائر لكل عملة</p>
-                    <div id="profitByCurrencyReport" class="profit-by-currency-list">
-                        <!-- Will be populated by JavaScript -->
-                    </div>
-                </div>
-
-                <!-- Currency Conversion Section -->
-                <div class="report-section">
-                    <h3>💱 محول العملات</h3>
-                    <p class="report-description">تحويل المبالغ بين العملات</p>
-                    <div class="currency-converter">
-                        <div class="converter-row">
-                            <div class="converter-field">
-                                <label>المبلغ</label>
-                                <input type="number" id="convertAmount" step="0.01" placeholder="0.00" class="converter-input">
-                            </div>
-                            <div class="converter-field">
-                                <label>من</label>
-                                <select id="convertFromCurrency" class="converter-select">
-                                    <option value="">اختر العملة</option>
-                                </select>
-                            </div>
-                            <button id="swapCurrenciesBtn" class="btn-swap" title="عكس العملات">⇄</button>
-                            <div class="converter-field">
-                                <label>إلى</label>
-                                <select id="convertToCurrency" class="converter-select">
-                                    <option value="">اختر العملة</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="converter-result">
-                            <div id="conversionResult" class="conversion-result-text">أدخل المبلغ والعملات للتحويل</div>
-                        </div>
-                        <div class="converter-note">
-                            <small>💡 أسعار الصرف يتم تحديثها تلقائياً من الإنترنت</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Multi-Currency Summary -->
-                <div class="report-section">
-                    <h3>📈 الملخص الموحد</h3>
-                    <p class="report-description">جميع الأرباح محولة إلى العملة الأساسية</p>
-                    <div class="base-currency-selector">
-                        <label>العملة الأساسية:</label>
-                        <select id="baseCurrencySelect" class="base-currency-select">
-                            <option value="">اختر العملة</option>
-                        </select>
-                    </div>
-                    <div id="multiCurrencySummary" class="multi-currency-summary">
-                        <!-- Will be populated by JavaScript -->
                     </div>
                 </div>
             </div>
