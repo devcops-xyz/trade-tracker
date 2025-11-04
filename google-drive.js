@@ -4,7 +4,8 @@ class GoogleDriveBackup {
         // Get Client ID from config
         this.CLIENT_ID = window.APP_CONFIG?.GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
         this.SCOPES = 'https://www.googleapis.com/auth/drive.file';
-        this.BACKUP_FILENAME = 'trade-tracker-backup.json';
+        this.workspaceId = null;
+        this.BACKUP_FILENAME = 'trade-tracker-backup.json'; // Will be updated with workspace ID
         this.accessToken = null;
         this.fileId = null;
 
@@ -36,25 +37,166 @@ class GoogleDriveBackup {
     checkSignInStatus() {
         const savedToken = localStorage.getItem('gdrive_token');
         const savedEmail = localStorage.getItem('gdrive_email');
+        const savedWorkspace = localStorage.getItem('workspace_id');
 
         if (savedToken && savedEmail) {
-            // User is signed in, show app
+            // User is signed in
             this.accessToken = savedToken;
-            this.showApp();
+
+            if (savedWorkspace) {
+                // User has workspace, show app
+                this.workspaceId = savedWorkspace;
+                this.updateBackupFilename();
+                this.showApp();
+                this.displayWorkspaceCode();
+            } else {
+                // User signed in but no workspace, show workspace selection
+                this.showWorkspaceGate();
+            }
         } else {
-            // User not signed in, show gate
+            // User not signed in, show sign-in gate
             this.showSignInGate();
         }
     }
 
     showSignInGate() {
         document.getElementById('signInGate').classList.add('active');
+        document.getElementById('workspaceGate').classList.remove('active');
+        document.getElementById('appContent').style.display = 'none';
+    }
+
+    showWorkspaceGate() {
+        document.getElementById('signInGate').classList.remove('active');
+        document.getElementById('workspaceGate').classList.add('active');
         document.getElementById('appContent').style.display = 'none';
     }
 
     showApp() {
         document.getElementById('signInGate').classList.remove('active');
+        document.getElementById('workspaceGate').classList.remove('active');
         document.getElementById('appContent').style.display = 'block';
+    }
+
+    generateWorkspaceId() {
+        // Generate a 6-character alphanumeric code
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude similar looking characters
+        let code = '';
+        for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    async createWorkspace() {
+        const workspaceId = this.generateWorkspaceId();
+        this.workspaceId = workspaceId;
+        localStorage.setItem('workspace_id', workspaceId);
+        this.updateBackupFilename();
+        this.showApp();
+        this.displayWorkspaceCode();
+
+        // Try to load existing data from Drive (in case workspace code was reused)
+        await this.loadWorkspaceData();
+
+        // Show notification
+        if (window.tracker) {
+            window.tracker.showNotification('✓ تم إنشاء مساحة العمل بنجاح!');
+        }
+    }
+
+    async joinWorkspace(code) {
+        if (!code || code.length !== 6) {
+            alert('رمز مساحة العمل غير صحيح');
+            return;
+        }
+
+        const workspaceId = code.toUpperCase();
+        this.workspaceId = workspaceId;
+        localStorage.setItem('workspace_id', workspaceId);
+        this.updateBackupFilename();
+        this.showApp();
+        this.displayWorkspaceCode();
+
+        // Load shared data from Drive
+        await this.loadWorkspaceData();
+
+        // Show notification
+        if (window.tracker) {
+            window.tracker.showNotification('✓ تم الانضمام لمساحة العمل بنجاح!');
+        }
+    }
+
+    async loadWorkspaceData() {
+        if (!this.accessToken) return;
+
+        try {
+            // Find the backup file for this workspace
+            await this.findBackupFile();
+
+            if (this.fileId) {
+                // Download the file
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${this.fileId}?alt=media`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${this.accessToken}`
+                        }
+                    }
+                );
+
+                if (response.ok) {
+                    const backupData = await response.json();
+
+                    // Restore data
+                    if (backupData.data && backupData.data.transactions) {
+                        localStorage.setItem('transactions', JSON.stringify(backupData.data.transactions));
+
+                        // Reload the app
+                        if (window.tracker) {
+                            window.tracker.transactions = backupData.data.transactions;
+                            window.tracker.renderTransactions();
+                            window.tracker.updateDashboard();
+                        }
+
+                        console.log('✓ Workspace data loaded from Drive');
+                    }
+                }
+            } else {
+                console.log('No existing backup found for this workspace');
+            }
+        } catch (error) {
+            console.error('Error loading workspace data:', error);
+        }
+    }
+
+    updateBackupFilename() {
+        if (this.workspaceId) {
+            this.BACKUP_FILENAME = `trade-tracker-${this.workspaceId}.json`;
+        }
+    }
+
+    displayWorkspaceCode() {
+        const codeEl = document.getElementById('currentWorkspaceCode');
+        if (codeEl && this.workspaceId) {
+            codeEl.textContent = this.workspaceId;
+        }
+    }
+
+    shareWorkspace() {
+        if (!this.workspaceId) return;
+
+        const shareText = `انضم لمساحة العمل على متتبع التجارة:\n\nالرمز: ${this.workspaceId}\n\nالرابط: https://devcops-xyz.github.io/trade-tracker/`;
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareText).then(() => {
+                if (window.tracker) {
+                    window.tracker.showNotification('✓ تم نسخ رمز مساحة العمل');
+                }
+            });
+        } else {
+            // Fallback
+            alert(shareText);
+        }
     }
 
     setupEventListeners() {
@@ -69,6 +211,39 @@ class GoogleDriveBackup {
                 this.signIn();
             });
         }
+
+        // Workspace buttons
+        const createWorkspaceBtn = document.getElementById('createWorkspaceBtn');
+        const joinWorkspaceBtn = document.getElementById('joinWorkspaceBtn');
+        const confirmJoinBtn = document.getElementById('confirmJoinBtn');
+        const cancelJoinBtn = document.getElementById('cancelJoinBtn');
+        const shareWorkspaceBtn = document.getElementById('shareWorkspaceBtn');
+        const joinWorkspaceForm = document.getElementById('joinWorkspaceForm');
+        const workspaceActions = document.querySelector('.workspace-actions');
+
+        createWorkspaceBtn?.addEventListener('click', () => {
+            this.createWorkspace();
+        });
+
+        joinWorkspaceBtn?.addEventListener('click', () => {
+            workspaceActions.style.display = 'none';
+            joinWorkspaceForm.style.display = 'block';
+        });
+
+        confirmJoinBtn?.addEventListener('click', () => {
+            const code = document.getElementById('workspaceCodeInput').value;
+            this.joinWorkspace(code);
+        });
+
+        cancelJoinBtn?.addEventListener('click', () => {
+            workspaceActions.style.display = 'flex';
+            joinWorkspaceForm.style.display = 'none';
+            document.getElementById('workspaceCodeInput').value = '';
+        });
+
+        shareWorkspaceBtn?.addEventListener('click', () => {
+            this.shareWorkspace();
+        });
 
         // Modal controls
         const openModalBtn = document.getElementById('openBackupSettings');
@@ -156,8 +331,17 @@ class GoogleDriveBackup {
                         this.getUserInfo();
                         this.showStatus('تم تسجيل الدخول بنجاح ✓', 'success');
 
-                        // Show the app after successful sign-in
-                        this.showApp();
+                        // Check if user has workspace
+                        const savedWorkspace = localStorage.getItem('workspace_id');
+                        if (savedWorkspace) {
+                            this.workspaceId = savedWorkspace;
+                            this.updateBackupFilename();
+                            this.showApp();
+                            this.displayWorkspaceCode();
+                        } else {
+                            // Show workspace selection
+                            this.showWorkspaceGate();
+                        }
                     }
                 },
             });

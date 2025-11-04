@@ -30,10 +30,48 @@
         </div>
     </div>
 
+    <!-- Workspace Selection Modal -->
+    <div id="workspaceGate" class="sign-in-gate">
+        <div class="sign-in-content">
+            <div class="sign-in-icon">👥</div>
+            <h1>اختر مساحة العمل</h1>
+            <p class="sign-in-description">أنشئ مساحة عمل جديدة أو انضم لفريق موجود</p>
+
+            <div class="workspace-actions">
+                <button id="createWorkspaceBtn" class="btn-workspace-primary">
+                    ➕ إنشاء مساحة عمل جديدة
+                </button>
+                <button id="joinWorkspaceBtn" class="btn-workspace-secondary">
+                    🔗 الانضمام لمساحة عمل موجودة
+                </button>
+            </div>
+
+            <div id="joinWorkspaceForm" class="workspace-form" style="display: none;">
+                <h3>أدخل رمز مساحة العمل</h3>
+                <input type="text" id="workspaceCodeInput" placeholder="أدخل الرمز هنا" class="workspace-input">
+                <div class="workspace-form-actions">
+                    <button id="confirmJoinBtn" class="btn-workspace-primary">انضمام</button>
+                    <button id="cancelJoinBtn" class="btn-workspace-secondary">إلغاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container" id="appContent" style="display: none;">
         <header>
-            <h1>📊 متتبع التجارة</h1>
-            <p class="subtitle">تتبع الصادرات والواردات وحساب الأرباح</p>
+            <div class="header-top">
+                <div>
+                    <h1>📊 متتبع التجارة</h1>
+                    <p class="subtitle">تتبع الصادرات والواردات وحساب الأرباح</p>
+                </div>
+                <div class="workspace-info">
+                    <div class="workspace-badge">
+                        <span class="workspace-label">مساحة العمل:</span>
+                        <span class="workspace-code" id="currentWorkspaceCode">----</span>
+                        <button id="shareWorkspaceBtn" class="btn-share" title="مشاركة مساحة العمل">📋</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Backup Settings Button -->
             <div class="backup-controls">

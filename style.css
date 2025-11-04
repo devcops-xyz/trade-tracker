@@ -23,6 +23,15 @@ header {
     margin-bottom: 30px;
 }
 
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
 header h1 {
     font-size: 2.5rem;
     margin-bottom: 10px;
@@ -32,6 +41,49 @@ header h1 {
 .subtitle {
     font-size: 1.1rem;
     opacity: 0.9;
+}
+
+.workspace-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.workspace-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(76, 175, 80, 0.15);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.workspace-label {
+    color: #b0b0b0;
+    font-size: 0.9rem;
+}
+
+.workspace-code {
+    color: #4CAF50;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    font-family: monospace;
+}
+
+.btn-share {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    transition: transform 0.2s;
+}
+
+.btn-share:hover {
+    transform: scale(1.2);
 }
 
 /* Backup Controls */
@@ -426,6 +478,89 @@ header h1 {
     color: #4CAF50;
     font-size: 0.9rem;
     font-weight: 600;
+}
+
+/* Workspace Selection Styles */
+.workspace-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.btn-workspace-primary,
+.btn-workspace-secondary {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-workspace-primary {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-workspace-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.btn-workspace-secondary {
+    background: #2a2a3e;
+    color: #e0e0e0;
+    border: 1px solid #3a3a4e;
+}
+
+.btn-workspace-secondary:hover {
+    background: #3a3a4e;
+    transform: translateY(-2px);
+}
+
+.workspace-form {
+    margin-top: 30px;
+    width: 100%;
+    max-width: 400px;
+}
+
+.workspace-form h3 {
+    color: #e0e0e0;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.workspace-input {
+    width: 100%;
+    padding: 12px;
+    background: #0f0f23;
+    border: 2px solid #2a2a3e;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    text-align: center;
+    letter-spacing: 2px;
+    font-family: monospace;
+    margin-bottom: 15px;
+}
+
+.workspace-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.workspace-form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.workspace-form-actions button {
+    flex: 1;
 }
 
 section {
