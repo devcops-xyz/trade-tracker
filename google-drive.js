@@ -3,7 +3,7 @@ class GoogleDriveBackup {
     constructor() {
         // Get Client ID from config
         this.CLIENT_ID = window.APP_CONFIG?.GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
-        this.SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        this.SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email';
         this.workspaceId = null;
         this.BACKUP_FILENAME = 'trade-tracker-backup.json'; // Will be updated with workspace ID
         this.accessToken = null;
@@ -440,11 +440,18 @@ class GoogleDriveBackup {
 
     updateUIBasedOnRole() {
         const role = localStorage.getItem('workspace_role');
+        console.log('🔐 Updating UI based on role:', role);
 
         // Show workspace settings for creators only
         const workspaceSettingsControls = document.querySelector('.workspace-settings-controls');
         if (workspaceSettingsControls) {
             workspaceSettingsControls.style.display = (role === 'creator') ? 'flex' : 'none';
+        }
+
+        // Hide quick add button for readers
+        const quickAddBtn = document.getElementById('quickAddBtn');
+        if (quickAddBtn) {
+            quickAddBtn.style.display = (role === 'reader') ? 'none' : 'flex';
         }
 
         // Disable transaction form for readers
@@ -463,6 +470,12 @@ class GoogleDriveBackup {
             inputs.forEach(input => {
                 input.disabled = true;
             });
+        }
+
+        // Hide add-transaction section completely for readers
+        const addTransactionSection = document.querySelector('.add-transaction');
+        if (addTransactionSection && role === 'reader') {
+            addTransactionSection.style.display = 'none';
         }
     }
 
