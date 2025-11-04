@@ -1443,33 +1443,164 @@ class GoogleDriveBackup {
     }
 
     async deleteBackup() {
-        // Triple confirmation for dangerous action
-        if (!confirm('⚠️ تحذير!\n\nهل أنت متأكد تماماً من حذف النسخة الاحتياطية؟\n\nسيتم حذف جميع البيانات المحفوظة على Google Drive.\nلن يتمكن أعضاء الفريق من استعادة البيانات.\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
-            return;
-        }
-
-        if (!confirm('⚠️ تأكيد نهائي\n\nاضغط "موافق" للحذف النهائي')) {
-            return;
-        }
-
         if (!this.accessToken) {
-            alert('يرجى تسجيل الدخول أولاً');
+            this.showStatus('يرجى تسجيل الدخول أولاً', 'error');
             return;
         }
 
         try {
+            this.showStatus('جاري البحث عن النسخ الاحتياطية...', 'info');
+
             // Find the backup file first
             await this.findBackupFile();
 
             if (!this.fileId) {
-                alert('لا توجد نسخة احتياطية لحذفها');
+                this.showStatus('لم يتم العثور على نسخ احتياطية', 'error');
                 return;
             }
 
-            console.log('🗑️ Deleting backup file:', this.fileId);
-
+            // Get all revisions of the backup file
             const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files/${this.fileId}`,
+                `https://www.googleapis.com/drive/v3/files/${this.fileId}/revisions?fields=revisions(id,modifiedTime,size)`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${this.accessToken}`
+                    }
+                }
+            );
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.showStatus('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً', 'error');
+                    this.signOut();
+                    return;
+                }
+                throw new Error('Failed to fetch revisions');
+            }
+
+            const data = await response.json();
+
+            if (!data.revisions || data.revisions.length === 0) {
+                this.showStatus('لم يتم العثور على نسخ احتياطية', 'error');
+                return;
+            }
+
+            // Show list of revisions for deletion
+            await this.showDeletionList(data.revisions.reverse()); // Most recent first
+
+        } catch (error) {
+            console.error('Delete backup error:', error);
+            this.showStatus('فشل البحث عن النسخ الاحتياطية ✗', 'error');
+        }
+    }
+
+    async showDeletionList(revisions) {
+        // Download each revision to get details
+        const revisionPromises = revisions.map(async (revision) => {
+            try {
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${this.fileId}/revisions/${revision.id}?alt=media`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${this.accessToken}`
+                        }
+                    }
+                );
+
+                if (response.ok) {
+                    const backupData = await response.json();
+                    return {
+                        revisionId: revision.id,
+                        timestamp: backupData.timestamp,
+                        transactionCount: backupData.data?.transactions?.length || 0,
+                        modifiedTime: revision.modifiedTime,
+                        isLatest: revision.id === revisions[0].id
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading revision:', error);
+            }
+            return null;
+        });
+
+        const backups = (await Promise.all(revisionPromises)).filter(b => b !== null);
+
+        if (backups.length === 0) {
+            this.showStatus('لم يتم العثور على نسخ احتياطية صالحة', 'error');
+            return;
+        }
+
+        // Create backup deletion selection UI
+        const backupListHTML = backups.map((backup) => {
+            const date = new Date(backup.timestamp).toLocaleString('ar-EG', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const latestBadge = backup.isLatest ? '<span class="latest-badge">الأحدث</span>' : '';
+            const latestWarning = backup.isLatest ? ' (⚠️ هذه النسخة الأحدث)' : '';
+
+            return `
+                <div class="backup-item deletion-item">
+                    <div class="backup-item-info">
+                        <div class="backup-item-date">📅 ${date} ${latestBadge}</div>
+                        <div class="backup-item-count">📊 ${backup.transactionCount} معاملة</div>
+                    </div>
+                    <button class="btn-delete-backup" onclick="window.driveBackup.deleteRevision('${backup.revisionId}', '${date}${latestWarning}')">
+                        🗑️ حذف
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        // Show in modal
+        const modal = document.getElementById('backupModal');
+        const modalBody = modal.querySelector('.modal-body');
+
+        // Save current content
+        const originalContent = modalBody.innerHTML;
+
+        // Show backup deletion list
+        modalBody.innerHTML = `
+            <div class="backup-list-section">
+                <h3>⚠️ حذف النسخ الاحتياطية</h3>
+                <p class="backup-description">اختر النسخ الاحتياطية التي تريد حذفها. هذا الإجراء لا يمكن التراجع عنه!</p>
+                <div class="backup-list deletion-list">
+                    ${backupListHTML}
+                </div>
+                <button class="btn-modal-secondary" onclick="window.driveBackup.cancelDeletion()">
+                    إلغاء
+                </button>
+                <div id="backupStatus" class="backup-status"></div>
+            </div>
+        `;
+
+        // Store original content for restore
+        this.originalModalContent = originalContent;
+
+        this.showStatus('', 'info'); // Clear status
+    }
+
+    cancelDeletion() {
+        const modal = document.getElementById('backupModal');
+        const modalBody = modal.querySelector('.modal-body');
+        modalBody.innerHTML = this.originalModalContent;
+        this.showStatus('', 'info');
+    }
+
+    async deleteRevision(revisionId, backupInfo) {
+        if (!confirm(`⚠️ تأكيد الحذف\n\nهل تريد حذف هذه النسخة الاحتياطية؟\n\n${backupInfo}\n\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+            return;
+        }
+
+        try {
+            this.showStatus('جاري الحذف...', 'info');
+
+            // Delete the specific revision
+            const response = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${this.fileId}/revisions/${revisionId}`,
                 {
                     method: 'DELETE',
                     headers: {
@@ -1479,23 +1610,27 @@ class GoogleDriveBackup {
             );
 
             if (response.ok || response.status === 204) {
-                console.log('✓ Backup deleted successfully');
-                this.fileId = null; // Clear the file ID
+                console.log('✓ Revision deleted successfully');
 
                 if (window.tracker) {
-                    window.tracker.showNotification('✓ تم حذف النسخة الاحتياطية من Drive');
+                    window.tracker.showNotification('✓ تم حذف النسخة الاحتياطية');
                 }
 
-                alert('✓ تم حذف النسخة الاحتياطية من Google Drive بنجاح\n\nملاحظة: البيانات المحلية لا تزال موجودة على جهازك');
+                // Refresh the deletion list
+                this.deleteBackup();
+
             } else if (response.status === 401) {
-                alert('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً');
+                this.showStatus('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً', 'error');
                 this.signOut();
+            } else if (response.status === 403) {
+                this.showStatus('❌ لا يمكن حذف هذه النسخة (آخر نسخة محفوظة)', 'error');
+                alert('⚠️ لا يمكن حذف آخر نسخة احتياطية متبقية\n\nيجب الاحتفاظ بنسخة واحدة على الأقل في Google Drive.\n\nإذا كنت تريد حذف جميع النسخ، احذف الملف بالكامل من Google Drive مباشرة.');
             } else {
                 throw new Error(`Failed to delete: ${response.status}`);
             }
         } catch (error) {
-            console.error('❌ Error deleting backup:', error);
-            alert('فشل حذف النسخة الاحتياطية. يرجى المحاولة مرة أخرى');
+            console.error('❌ Error deleting revision:', error);
+            this.showStatus('فشل حذف النسخة الاحتياطية ✗', 'error');
         }
     }
 
