@@ -89,14 +89,9 @@
                 </div>
             </div>
 
-            <!-- Backup Settings Button -->
-            <div class="backup-controls">
-                <button id="openBackupSettings" class="btn-backup">⚙️ إعدادات النسخ الاحتياطي</button>
-            </div>
-
-            <!-- Workspace Settings Button (Admin Only) -->
-            <div class="workspace-settings-controls" style="display: none;">
-                <button id="openWorkspaceSettings" class="btn-workspace-settings">⚙️ إعدادات مساحة العمل</button>
+            <!-- Unified Settings Button -->
+            <div class="settings-controls">
+                <button id="openSettings" class="btn-settings">⚙️ الإعدادات</button>
             </div>
         </header>
 
@@ -302,43 +297,6 @@
         </svg>
     </button>
 
-    <!-- Backup Settings Modal -->
-    <div id="backupModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>⚙️ إعدادات النسخ الاحتياطي</h2>
-                <button class="modal-close" id="closeBackupModal">✕</button>
-            </div>
-
-            <div class="modal-body">
-                <!-- Google Drive Section -->
-                <div class="backup-section">
-                    <h3>☁️ Google Drive</h3>
-                    <p class="backup-description">احفظ بياناتك تلقائياً على Google Drive الخاص بك</p>
-
-                    <!-- Not Signed In -->
-                    <div id="signInSection">
-                        <button id="signInBtn" class="btn-modal-primary">🔐 تسجيل الدخول بجوجل</button>
-                    </div>
-
-                    <!-- Signed In -->
-                    <div id="signedInSection" style="display: none;">
-                        <div class="user-info">
-                            <span class="user-email-badge" id="userEmail"></span>
-                        </div>
-                        <div class="backup-actions">
-                            <button id="backupBtn" class="btn-modal-primary">☁️ نسخ احتياطي الآن</button>
-                            <button id="restoreBtn" class="btn-modal-secondary">📥 استعادة من Drive</button>
-                            <button id="signOutBtn" class="btn-modal-danger">تسجيل الخروج</button>
-                        </div>
-                    </div>
-
-                    <div id="backupStatus" class="backup-status"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Charts Modal -->
     <div id="chartsModal" class="modal">
         <div class="modal-content modal-large">
@@ -362,15 +320,56 @@
         </div>
     </div>
 
-    <!-- Workspace Settings Modal -->
-    <div id="workspaceSettingsModal" class="modal">
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>⚙️ إعدادات مساحة العمل</h2>
-                <button class="modal-close" id="closeWorkspaceSettingsModal">✕</button>
+                <h2>⚙️ الإعدادات</h2>
+                <button class="modal-close" id="closeSettingsModal">✕</button>
             </div>
 
             <div class="modal-body">
+                <!-- Google Drive Backup Section -->
+                <div class="settings-section">
+                    <h3>☁️ Google Drive</h3>
+                    <p class="settings-description">احفظ بياناتك تلقائياً على Google Drive</p>
+
+                    <!-- Not Signed In -->
+                    <div id="signInSection">
+                        <button id="signInBtn" class="btn-modal-primary">🔐 تسجيل الدخول بجوجل</button>
+                    </div>
+
+                    <!-- Signed In -->
+                    <div id="signedInSection" style="display: none;">
+                        <div class="user-info">
+                            <span class="user-email-badge" id="userEmail"></span>
+                        </div>
+                        <div class="backup-actions">
+                            <button id="backupBtn" class="btn-modal-primary">☁️ نسخ احتياطي الآن</button>
+                            <button id="restoreBtn" class="btn-modal-secondary">📥 استعادة من Drive</button>
+                            <button id="signOutBtn" class="btn-modal-danger">تسجيل الخروج</button>
+                        </div>
+                    </div>
+
+                    <div id="backupStatus" class="backup-status"></div>
+                </div>
+
+                <!-- Workspace Invitation Section -->
+                <div class="settings-section">
+                    <h3>📧 دعوة الأعضاء</h3>
+                    <p class="settings-description">شارك رمز مساحة العمل مع فريقك</p>
+                    <div class="invite-section">
+                        <div class="workspace-code-display">
+                            <label>رمز مساحة العمل:</label>
+                            <div class="code-copy-container">
+                                <span class="workspace-code-large" id="settingsWorkspaceCode">----</span>
+                                <button id="copyWorkspaceCode" class="btn-copy-code" title="نسخ الرمز">📋</button>
+                            </div>
+                        </div>
+                        <p class="settings-note">شارك هذا الرمز مع الأعضاء الجدد للانضمام لمساحة العمل</p>
+                    </div>
+                </div>
+
                 <!-- Member Management Section (Creator Only) -->
                 <div class="settings-section" id="memberManagementSection" style="display: none;">
                     <h3>👥 إدارة الأعضاء</h3>
