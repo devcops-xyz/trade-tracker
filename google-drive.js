@@ -10,6 +10,9 @@ class GoogleDriveBackup {
         this.fileId = null;
         this.workspaceCurrencies = [];
         this.defaultCurrency = 'USD';
+        this.workspaceMembers = [];
+        this.activityLog = [];
+        this.currentUserEmail = null;
 
         // Check if configured
         if (this.CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
@@ -97,9 +100,22 @@ class GoogleDriveBackup {
         localStorage.setItem('workspace_id', workspaceId);
         localStorage.setItem('workspace_role', 'creator'); // Mark as creator
         this.updateBackupFilename();
+
+        // Initialize workspace with creator as first member
+        this.workspaceMembers = [{
+            email: this.currentUserEmail || 'creator@workspace',
+            role: 'creator',
+            joinedAt: new Date().toISOString()
+        }];
+        localStorage.setItem('workspace_members', JSON.stringify(this.workspaceMembers));
+
+        // Log activity
+        this.logActivity('created', 'workspace', `Created workspace ${workspaceId}`);
+
         this.showApp();
         this.displayWorkspaceCode();
         this.updateBackupControlsVisibility();
+        this.displayMemberManagement();
 
         // Try to load existing data from Drive (in case workspace code was reused)
         await this.loadWorkspaceData();
@@ -196,6 +212,19 @@ class GoogleDriveBackup {
                             this.defaultCurrency = backupData.data.defaultCurrency;
                         }
 
+                        // Save members if they exist
+                        if (backupData.data.members) {
+                            localStorage.setItem('workspace_members', JSON.stringify(backupData.data.members));
+                            this.workspaceMembers = backupData.data.members;
+                            this.addCurrentUserToMembers();
+                        }
+
+                        // Save activity log if it exists
+                        if (backupData.data.activityLog) {
+                            localStorage.setItem('activity_log', JSON.stringify(backupData.data.activityLog));
+                            this.activityLog = backupData.data.activityLog;
+                        }
+
                         // Reload the app
                         if (window.tracker) {
                             window.tracker.transactions = backupData.data.transactions;
@@ -213,6 +242,10 @@ class GoogleDriveBackup {
                         if (window.tracker) {
                             window.tracker.populateFilterCurrencies();
                         }
+
+                        // Display member management and activity log
+                        this.displayMemberManagement();
+                        this.displayActivityLog();
 
                         console.log('✓ Workspace data loaded from Drive successfully!');
                         if (window.tracker) {
@@ -723,6 +756,7 @@ class GoogleDriveBackup {
                 headers: { Authorization: `Bearer ${this.accessToken}` }
             });
             const data = await response.json();
+            this.currentUserEmail = data.email;
             localStorage.setItem('gdrive_email', data.email);
             this.updateUISignedIn(data.email);
         } catch (error) {
@@ -778,15 +812,19 @@ class GoogleDriveBackup {
             const transactions = localStorage.getItem('transactions') || '[]';
             const currencies = localStorage.getItem('workspace_currencies') || '[]';
             const defaultCurrency = localStorage.getItem('default_currency') || 'USD';
+            const members = localStorage.getItem('workspace_members') || '[]';
+            const activityLog = localStorage.getItem('activity_log') || '[]';
 
             const backupData = {
                 timestamp: new Date().toISOString(),
-                version: '1.0',
+                version: '1.1',
                 workspaceId: this.workspaceId || null,
                 data: {
                     transactions: JSON.parse(transactions),
                     currencies: JSON.parse(currencies),
-                    defaultCurrency: defaultCurrency
+                    defaultCurrency: defaultCurrency,
+                    members: JSON.parse(members),
+                    activityLog: JSON.parse(activityLog)
                 }
             };
 
@@ -1123,15 +1161,19 @@ class GoogleDriveBackup {
             const transactions = localStorage.getItem('transactions') || '[]';
             const currencies = localStorage.getItem('workspace_currencies') || '[]';
             const defaultCurrency = localStorage.getItem('default_currency') || 'USD';
+            const members = localStorage.getItem('workspace_members') || '[]';
+            const activityLog = localStorage.getItem('activity_log') || '[]';
 
             const backupData = {
                 timestamp: new Date().toISOString(),
-                version: '1.0',
+                version: '1.1',
                 workspaceId: this.workspaceId || null,
                 data: {
                     transactions: JSON.parse(transactions),
                     currencies: JSON.parse(currencies),
-                    defaultCurrency: defaultCurrency
+                    defaultCurrency: defaultCurrency,
+                    members: JSON.parse(members),
+                    activityLog: JSON.parse(activityLog)
                 }
             };
 
@@ -1448,6 +1490,204 @@ class GoogleDriveBackup {
             console.error('❌ Error deleting backup:', error);
             alert('فشل حذف النسخة الاحتياطية. يرجى المحاولة مرة أخرى');
         }
+    }
+
+    // Phase 3: Team Collaboration Features
+
+    addCurrentUserToMembers() {
+        if (!this.currentUserEmail) {
+            this.currentUserEmail = localStorage.getItem('gdrive_email');
+        }
+
+        if (!this.currentUserEmail) return;
+
+        // Check if current user is already in members list
+        const existingMember = this.workspaceMembers.find(m => m.email === this.currentUserEmail);
+
+        if (!existingMember) {
+            // Add current user as reader
+            const role = localStorage.getItem('workspace_role') || 'reader';
+            this.workspaceMembers.push({
+                email: this.currentUserEmail,
+                role: role,
+                joinedAt: new Date().toISOString()
+            });
+
+            localStorage.setItem('workspace_members', JSON.stringify(this.workspaceMembers));
+            this.logActivity('joined', 'workspace', 'Joined the workspace');
+            this.autoBackup();
+        }
+    }
+
+    displayMemberManagement() {
+        const section = document.getElementById('memberManagementSection');
+        const container = document.getElementById('membersList');
+        const role = localStorage.getItem('workspace_role');
+
+        if (!section || !container) return;
+
+        // Only show for creators
+        if (role === 'creator') {
+            section.style.display = 'block';
+        } else {
+            section.style.display = 'none';
+            return;
+        }
+
+        // Load members
+        const savedMembers = localStorage.getItem('workspace_members');
+        if (savedMembers) {
+            this.workspaceMembers = JSON.parse(savedMembers);
+        }
+
+        if (this.workspaceMembers.length === 0) {
+            container.innerHTML = '<p style="color: #808080; text-align: center;">لا يوجد أعضاء بعد</p>';
+            return;
+        }
+
+        container.innerHTML = this.workspaceMembers.map((member, index) => {
+            const joinedDate = new Date(member.joinedAt).toLocaleDateString('ar-EG');
+            const roleNames = { creator: 'منشئ', writer: 'كاتب', reader: 'قارئ' };
+            const isCreator = member.role === 'creator';
+
+            return `
+                <div class="member-card">
+                    <div class="member-icon">${member.email.charAt(0).toUpperCase()}</div>
+                    <div class="member-info">
+                        <div class="member-email">${member.email}</div>
+                        <div class="member-joined">انضم في ${joinedDate}</div>
+                    </div>
+                    ${isCreator ?
+                        `<span class="member-role-badge ${member.role}">${roleNames[member.role]}</span>` :
+                        `<select class="member-role-select" onchange="window.driveBackup.changeMemberRole(${index}, this.value)">
+                            <option value="reader" ${member.role === 'reader' ? 'selected' : ''}>قارئ</option>
+                            <option value="writer" ${member.role === 'writer' ? 'selected' : ''}>كاتب</option>
+                        </select>`
+                    }
+                </div>
+            `;
+        }).join('');
+    }
+
+    changeMemberRole(index, newRole) {
+        const member = this.workspaceMembers[index];
+        const oldRole = member.role;
+
+        if (oldRole === newRole) return;
+
+        member.role = newRole;
+        localStorage.setItem('workspace_members', JSON.stringify(this.workspaceMembers));
+
+        this.logActivity('modified', 'member', `Changed ${member.email} role from ${oldRole} to ${newRole}`);
+        this.displayMemberManagement();
+        this.autoBackup();
+
+        if (window.tracker) {
+            window.tracker.showNotification(`✓ تم تغيير صلاحيات ${member.email}`);
+        }
+    }
+
+    logActivity(action, targetType, description) {
+        if (!this.currentUserEmail) {
+            this.currentUserEmail = localStorage.getItem('gdrive_email') || 'Unknown User';
+        }
+
+        const activity = {
+            id: Date.now(),
+            user: this.currentUserEmail,
+            action: action,
+            targetType: targetType,
+            description: description,
+            timestamp: new Date().toISOString()
+        };
+
+        // Load existing log
+        const savedLog = localStorage.getItem('activity_log');
+        this.activityLog = savedLog ? JSON.parse(savedLog) : [];
+
+        // Add new activity at the beginning
+        this.activityLog.unshift(activity);
+
+        // Keep only last 100 activities
+        if (this.activityLog.length > 100) {
+            this.activityLog = this.activityLog.slice(0, 100);
+        }
+
+        localStorage.setItem('activity_log', JSON.stringify(this.activityLog));
+        this.displayActivityLog();
+    }
+
+    displayActivityLog() {
+        const section = document.getElementById('activityLogSection');
+        const container = document.getElementById('activityList');
+
+        if (!section || !container) return;
+
+        // Show activity log section for workspace members
+        const workspaceId = localStorage.getItem('workspace_id');
+        if (workspaceId) {
+            section.style.display = 'block';
+        }
+
+        // Load activity log
+        const savedLog = localStorage.getItem('activity_log');
+        this.activityLog = savedLog ? JSON.parse(savedLog) : [];
+
+        if (this.activityLog.length === 0) {
+            container.innerHTML = '<p style="color: #808080; text-align: center; padding: 20px;">لا يوجد نشاط بعد</p>';
+            return;
+        }
+
+        // Show last 20 activities
+        const recentActivities = this.activityLog.slice(0, 20);
+
+        container.innerHTML = recentActivities.map(activity => {
+            const time = new Date(activity.timestamp);
+            const relativeTime = this.getRelativeTime(time);
+            const actionClass = activity.action === 'deleted' ? 'deleted' :
+                               activity.action === 'modified' ? 'modified' : 'added';
+
+            return `
+                <div class="activity-item ${actionClass}">
+                    <div class="activity-details">
+                        <span class="activity-user">${activity.user}</span>
+                        <span class="activity-action">${activity.description}</span>
+                    </div>
+                    <div class="activity-time">${relativeTime}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Setup toggle button
+        const toggleBtn = document.getElementById('toggleActivityLog');
+        const content = document.getElementById('activityLogContent');
+
+        if (toggleBtn && content) {
+            toggleBtn.onclick = () => {
+                if (content.style.display === 'none') {
+                    content.style.display = 'block';
+                    toggleBtn.textContent = 'إخفاء';
+                } else {
+                    content.style.display = 'none';
+                    toggleBtn.textContent = 'عرض';
+                }
+            };
+        }
+    }
+
+    getRelativeTime(date) {
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        if (diffMins < 1) return 'الآن';
+        if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
+        if (diffHours < 24) return `منذ ${diffHours} ساعة`;
+        if (diffDays < 7) return `منذ ${diffDays} يوم`;
+
+        return date.toLocaleDateString('ar-EG');
     }
 }
 

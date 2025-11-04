@@ -240,6 +240,9 @@ class TradeTracker {
             date: new Date(transactionDate).toISOString()
         };
 
+        // Add empty comments array
+        transaction.comments = [];
+
         this.transactions.unshift(transaction);
         this.saveTransactions();
         this.applyFiltersAndRender();
@@ -256,14 +259,20 @@ class TradeTracker {
         // Show success message
         this.showNotification('تمت إضافة المعاملة بنجاح ✓');
 
-        // Trigger auto-backup to Google Drive (once per day)
+        // Log activity
         if (window.driveBackup) {
+            window.driveBackup.logActivity('added', 'transaction',
+                `Added ${type} transaction: ${description} (${currency} ${amount.toFixed(2)})`);
+            // Trigger auto-backup to Google Drive
             window.driveBackup.autoBackup();
         }
     }
 
     deleteTransaction(id) {
         if (confirm('هل أنت متأكد من حذف هذه المعاملة؟')) {
+            const transaction = this.transactions.find(t => t.id === id);
+            const desc = transaction ? `${transaction.description} (${transaction.currency} ${transaction.amount})` : 'transaction';
+
             this.transactions = this.transactions.filter(t => t.id !== id);
             this.saveTransactions();
             this.applyFiltersAndRender();
@@ -272,8 +281,10 @@ class TradeTracker {
             this.populateFilterCurrencies();
             this.showNotification('تم حذف المعاملة');
 
-            // Trigger auto-backup to Google Drive (once per day)
+            // Log activity
             if (window.driveBackup) {
+                window.driveBackup.logActivity('deleted', 'transaction', `Deleted transaction: ${desc}`);
+                // Trigger auto-backup to Google Drive
                 window.driveBackup.autoBackup();
             }
         }
@@ -411,6 +422,8 @@ class TradeTracker {
                 ? `<button class="btn-delete" onclick="tracker.deleteTransaction(${transaction.id})">🗑️</button>`
                 : '';
 
+            const commentsSection = this.renderComments(transaction);
+
             return `
                 <div class="transaction-item ${transaction.type}">
                     <div class="transaction-info">
@@ -419,6 +432,7 @@ class TradeTracker {
                         </div>
                         <div class="transaction-description">${transaction.description}</div>
                         <div class="transaction-date">${formattedDate}</div>
+                        ${commentsSection}
                     </div>
                     <div class="transaction-amount">${currency} ${transaction.amount.toFixed(2)}</div>
                     ${deleteButton}
@@ -1081,6 +1095,90 @@ class TradeTracker {
                 </div>
             </div>
         `;
+    }
+
+    // Phase 3: Transaction Comments
+
+    addComment(transactionId, commentText) {
+        if (!commentText || !commentText.trim()) return;
+
+        const transaction = this.transactions.find(t => t.id === transactionId);
+        if (!transaction) return;
+
+        // Initialize comments array if not exists
+        if (!transaction.comments) {
+            transaction.comments = [];
+        }
+
+        const userEmail = window.driveBackup?.currentUserEmail || localStorage.getItem('gdrive_email') || 'Anonymous';
+
+        const comment = {
+            id: Date.now(),
+            author: userEmail,
+            text: commentText.trim(),
+            timestamp: new Date().toISOString()
+        };
+
+        transaction.comments.push(comment);
+        this.saveTransactions();
+        this.renderTransactions();
+
+        // Log activity
+        if (window.driveBackup) {
+            window.driveBackup.logActivity('added', 'comment', `Commented on transaction: ${transaction.description}`);
+            window.driveBackup.autoBackup();
+        }
+
+        this.showNotification('✓ تم إضافة التعليق');
+    }
+
+    toggleComments(transactionId) {
+        const commentsDiv = document.getElementById(`comments-${transactionId}`);
+        if (commentsDiv) {
+            commentsDiv.style.display = commentsDiv.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    renderComments(transaction) {
+        if (!transaction.comments || transaction.comments.length === 0) {
+            return '';
+        }
+
+        const commentsHTML = transaction.comments.map(comment => {
+            const time = new Date(comment.timestamp);
+            const relativeTime = window.driveBackup?.getRelativeTime(time) || time.toLocaleDateString('ar-EG');
+
+            return `
+                <div class="comment-item">
+                    <div class="comment-author">${comment.author}</div>
+                    <div class="comment-text">${comment.text}</div>
+                    <div class="comment-time">${relativeTime}</div>
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="transaction-comments">
+                <button class="comments-toggle" onclick="tracker.toggleComments(${transaction.id})">
+                    💬 ${transaction.comments.length} تعليق
+                </button>
+                <div id="comments-${transaction.id}" class="comments-list" style="display: none;">
+                    ${commentsHTML}
+                    <div class="add-comment-form">
+                        <input type="text" id="comment-input-${transaction.id}" placeholder="أضف تعليق..." class="comment-input">
+                        <button onclick="tracker.addCommentFromInput(${transaction.id})" class="btn-add-comment">إضافة</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    addCommentFromInput(transactionId) {
+        const input = document.getElementById(`comment-input-${transactionId}`);
+        if (input && input.value) {
+            this.addComment(transactionId, input.value);
+            input.value = '';
+        }
     }
 
 }
