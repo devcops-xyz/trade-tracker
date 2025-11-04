@@ -2464,33 +2464,63 @@ class GoogleDriveBackup {
     }
 
     updateAdminStatistics() {
+        console.log('📊 Updating admin statistics...');
+        console.log('Workspace ID:', this.workspaceId || 'none');
+        console.log('Workspace members:', this.workspaceMembers);
+
         // Total members
         const totalMembers = this.workspaceMembers.length;
-        document.getElementById('totalMembers').textContent = totalMembers;
+        const membersEl = document.getElementById('totalMembers');
+        if (membersEl) membersEl.textContent = totalMembers;
 
         // Total transactions
         const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-        document.getElementById('totalTransactions').textContent = transactions.length;
+        const transactionsEl = document.getElementById('totalTransactions');
+        if (transactionsEl) transactionsEl.textContent = transactions.length;
 
         // Total currencies
-        document.getElementById('totalCurrencies').textContent = this.workspaceCurrencies.length;
+        const currenciesEl = document.getElementById('totalCurrencies');
+        if (currenciesEl) currenciesEl.textContent = this.workspaceCurrencies.length;
 
         // Total activities
         const activityLog = JSON.parse(localStorage.getItem('activity_log') || '[]');
-        document.getElementById('totalActivities').textContent = activityLog.length;
+        const activitiesEl = document.getElementById('totalActivities');
+        if (activitiesEl) activitiesEl.textContent = activityLog.length;
+
+        console.log('Statistics:', {
+            members: totalMembers,
+            transactions: transactions.length,
+            currencies: this.workspaceCurrencies.length,
+            activities: activityLog.length
+        });
     }
 
     displayAdminUsers() {
         const container = document.getElementById('adminUsersList');
         if (!container) return;
 
+        console.log('👨‍💼 Displaying admin users...');
+        console.log('Current workspace ID:', this.workspaceId || 'none');
+
         const savedMembers = localStorage.getItem('workspace_members');
         if (savedMembers) {
             this.workspaceMembers = JSON.parse(savedMembers);
+            console.log('Loaded workspace members:', this.workspaceMembers);
+        } else {
+            console.log('No workspace_members in localStorage');
         }
 
         if (this.workspaceMembers.length === 0) {
-            container.innerHTML = '<p style="color: #808080; text-align: center; padding: 20px;">لا يوجد أعضاء</p>';
+            const workspaceId = localStorage.getItem('workspace_id');
+            if (!workspaceId) {
+                container.innerHTML = `
+                    <p style="color: #808080; text-align: center; padding: 20px;">
+                        لا توجد مساحة عمل محددة<br>
+                        <span style="font-size: 0.9rem;">قم بإنشاء مساحة عمل أو الانضمام لواحدة لعرض الأعضاء</span>
+                    </p>`;
+            } else {
+                container.innerHTML = '<p style="color: #808080; text-align: center; padding: 20px;">لا يوجد أعضاء في مساحة العمل</p>';
+            }
             return;
         }
 
