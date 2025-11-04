@@ -80,12 +80,7 @@
 
         <!-- Dashboard Section -->
         <section class="dashboard">
-            <div class="dashboard-header">
-                <h2>لوحة التحكم</h2>
-                <div class="dashboard-actions">
-                    <button id="openChartsBtn" class="btn-view-charts">📈 عرض الرسوم البيانية</button>
-                </div>
-            </div>
+            <h2>لوحة التحكم</h2>
             <div class="profit-cards">
                 <div class="card daily">
                     <div class="card-header">الربح اليومي</div>
@@ -279,29 +274,6 @@
         </svg>
     </button>
 
-    <!-- Charts Modal -->
-    <div id="chartsModal" class="modal">
-        <div class="modal-content modal-large">
-            <div class="modal-header">
-                <h2>📈 الرسوم البيانية</h2>
-                <button class="modal-close" id="closeChartsModal">✕</button>
-            </div>
-
-            <div class="modal-body">
-                <div class="charts-container">
-                    <div class="chart-card">
-                        <h3>الربح الشهري</h3>
-                        <canvas id="profitChart"></canvas>
-                    </div>
-                    <div class="chart-card">
-                        <h3>الصادرات vs الواردات</h3>
-                        <canvas id="comparisonChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
@@ -319,6 +291,7 @@
                             <span class="workspace-role-badge" id="workspaceRole"></span>
                             <div style="display: flex; gap: 8px;">
                                 <button id="syncWorkspaceBtn" class="btn-sync" title="تحديث من Drive">🔄</button>
+                                <button id="inviteToWorkspaceBtn" class="btn-sync" title="دعوة أعضاء">📨</button>
                                 <button id="leaveWorkspaceBtn" class="btn-leave" title="مغادرة مساحة العمل">🚪</button>
                             </div>
                         </div>
@@ -391,6 +364,13 @@
                             🗑️ حذف النسخة الاحتياطية من Drive
                         </button>
                         <p class="danger-warning">⚠️ سيتم حذف جميع البيانات المحفوظة على Google Drive</p>
+                    </div>
+
+                    <div class="danger-actions" style="margin-top: 16px;">
+                        <button id="deleteAccountBtn" class="btn-modal-danger">
+                            🚨 حذف الحساب والبيانات المحلية
+                        </button>
+                        <p class="danger-warning">⚠️ سيتم حذف جميع البيانات المحلية والخروج من الحساب</p>
                     </div>
                 </div>
             </div>

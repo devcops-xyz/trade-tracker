@@ -48,6 +48,7 @@ class GoogleDriveBackup {
         if (savedToken && savedEmail) {
             // User is signed in
             this.accessToken = savedToken;
+            this.currentUserEmail = savedEmail;
 
             if (savedWorkspace) {
                 // User has workspace, show app
@@ -618,32 +619,17 @@ class GoogleDriveBackup {
             this.deleteBackup();
         });
 
-        // Charts Modal controls
-        const openChartsBtn = document.getElementById('openChartsBtn');
-        const closeChartsBtn = document.getElementById('closeChartsModal');
-        const chartsModal = document.getElementById('chartsModal');
-
-        openChartsBtn?.addEventListener('click', () => {
-            chartsModal.classList.add('active');
-            // Refresh charts when opening modal
-            if (window.tracker) {
-                setTimeout(() => {
-                    window.tracker.updateCharts();
-                }, 100);
-            }
+        // Delete account button
+        const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+        deleteAccountBtn?.addEventListener('click', () => {
+            this.deleteAccount();
         });
 
-        closeChartsBtn?.addEventListener('click', () => {
-            chartsModal.classList.remove('active');
+        // Invitation button
+        const inviteBtn = document.getElementById('inviteToWorkspaceBtn');
+        inviteBtn?.addEventListener('click', () => {
+            this.shareWorkspace();
         });
-
-        chartsModal?.addEventListener('click', (e) => {
-            if (e.target === chartsModal) {
-                chartsModal.classList.remove('active');
-            }
-        });
-
-        // Backup modal is removed - all backup controls are in settings modal now
 
         // Google Drive controls
         const signInBtn = document.getElementById('signInBtn');
@@ -672,6 +658,7 @@ class GoogleDriveBackup {
         const savedEmail = localStorage.getItem('gdrive_email');
         if (savedToken && savedEmail) {
             this.accessToken = savedToken;
+            this.currentUserEmail = savedEmail;
             this.updateUISignedIn(savedEmail);
         }
 
@@ -846,6 +833,14 @@ class GoogleDriveBackup {
 
                 const date = new Date().toLocaleString('ar-EG');
                 this.showStatus(`✓ تم النسخ الاحتياطي بنجاح (${date})`, 'success');
+
+                // Close settings modal after successful backup
+                setTimeout(() => {
+                    const modal = document.getElementById('settingsModal');
+                    if (modal) {
+                        modal.classList.remove('active');
+                    }
+                }, 1500);
             } else if (response.status === 401) {
                 this.showStatus('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً', 'error');
                 this.signOut();
@@ -975,7 +970,7 @@ class GoogleDriveBackup {
         }).join('');
 
         // Show in modal
-        const modal = document.getElementById('backupModal');
+        const modal = document.getElementById('settingsModal');
         const modalBody = modal.querySelector('.modal-body');
 
         // Save current content
@@ -1003,7 +998,7 @@ class GoogleDriveBackup {
     }
 
     cancelRestore() {
-        const modal = document.getElementById('backupModal');
+        const modal = document.getElementById('settingsModal');
         const modalBody = modal.querySelector('.modal-body');
         modalBody.innerHTML = this.originalModalContent;
         this.showStatus('', 'info');
@@ -1050,7 +1045,7 @@ class GoogleDriveBackup {
                 }
 
                 // Close the modal
-                const modal = document.getElementById('backupModal');
+                const modal = document.getElementById('settingsModal');
                 modal.classList.remove('active');
 
                 // Restore modal content
@@ -1542,7 +1537,7 @@ class GoogleDriveBackup {
         }).join('');
 
         // Show in modal
-        const modal = document.getElementById('backupModal');
+        const modal = document.getElementById('settingsModal');
         const modalBody = modal.querySelector('.modal-body');
 
         // Save current content
@@ -1570,7 +1565,7 @@ class GoogleDriveBackup {
     }
 
     cancelDeletion() {
-        const modal = document.getElementById('backupModal');
+        const modal = document.getElementById('settingsModal');
         const modalBody = modal.querySelector('.modal-body');
         modalBody.innerHTML = this.originalModalContent;
         this.showStatus('', 'info');
@@ -1644,6 +1639,52 @@ class GoogleDriveBackup {
                 btn.style.opacity = '1';
                 btn.style.cursor = 'pointer';
             });
+        }
+    }
+
+    deleteAccount() {
+        if (!confirm('⚠️ تحذير: حذف الحساب\n\nهل أنت متأكد من حذف حسابك وجميع البيانات المحلية؟\n\n• سيتم حذف جميع المعاملات المحلية\n• سيتم الخروج من Google Drive\n• لن يتم حذف النسخ الاحتياطية من Google Drive\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
+            return;
+        }
+
+        // Double confirmation
+        if (!confirm('هل أنت متأكد 100%؟ سيتم حذف جميع البيانات المحلية نهائياً!')) {
+            return;
+        }
+
+        try {
+            // Clear all local storage
+            localStorage.clear();
+
+            // Reset all variables
+            this.accessToken = null;
+            this.fileId = null;
+            this.workspaceId = null;
+            this.currentUserEmail = null;
+            this.workspaceCurrencies = [];
+            this.workspaceMembers = [];
+            this.activityLog = [];
+
+            // Clear UI
+            if (window.tracker) {
+                window.tracker.transactions = [];
+                window.tracker.renderTransactions();
+                window.tracker.updateDashboard();
+            }
+
+            // Close settings modal
+            const modal = document.getElementById('settingsModal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+
+            // Show sign-in gate
+            this.showSignInGate();
+
+            console.log('✓ Account deleted successfully');
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            alert('حدث خطأ أثناء حذف الحساب. يرجى المحاولة مرة أخرى.');
         }
     }
 
