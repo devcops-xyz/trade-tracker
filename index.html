@@ -54,25 +54,10 @@
                 <h3>أدخل رمز مساحة العمل</h3>
                 <input type="text" id="workspaceCodeInput" placeholder="أدخل الرمز هنا" class="workspace-input">
 
-                <h3 style="margin-top: 20px;">اختر صلاحيتك</h3>
-                <div class="role-selection">
-                    <label class="role-option">
-                        <input type="radio" name="joinRole" value="writer" checked>
-                        <div class="role-card">
-                            <div class="role-icon">✏️</div>
-                            <div class="role-title">كاتب</div>
-                            <div class="role-desc">يمكنه إضافة وحذف المعاملات</div>
-                        </div>
-                    </label>
-                    <label class="role-option">
-                        <input type="radio" name="joinRole" value="reader">
-                        <div class="role-card">
-                            <div class="role-icon">👁️</div>
-                            <div class="role-title">قارئ</div>
-                            <div class="role-desc">يمكنه فقط مشاهدة المعاملات</div>
-                        </div>
-                    </label>
-                </div>
+                <p style="color: #b0b0b0; font-size: 0.9rem; margin-top: 15px; text-align: center;">
+                    ⓘ ستنضم كـ <strong style="color: #2196F3;">قارئ</strong> افتراضياً<br>
+                    يمكن لمنشئ مساحة العمل تغيير صلاحيتك لاحقاً
+                </p>
 
                 <div class="workspace-form-actions">
                     <button id="confirmJoinBtn" class="btn-workspace-primary">انضمام</button>
@@ -115,24 +100,12 @@
             </div>
         </header>
 
-        <!-- Charts Section -->
-        <section class="charts-section">
-            <h2>📈 الرسوم البيانية</h2>
-            <div class="charts-container">
-                <div class="chart-card">
-                    <h3>الربح الشهري</h3>
-                    <canvas id="profitChart"></canvas>
-                </div>
-                <div class="chart-card">
-                    <h3>الصادرات vs الواردات</h3>
-                    <canvas id="comparisonChart"></canvas>
-                </div>
-            </div>
-        </section>
-
         <!-- Dashboard Section -->
         <section class="dashboard">
-            <h2>لوحة التحكم</h2>
+            <div class="dashboard-header">
+                <h2>لوحة التحكم</h2>
+                <button id="openChartsBtn" class="btn-view-charts">📈 عرض الرسوم البيانية</button>
+            </div>
             <div class="profit-cards">
                 <div class="card daily">
                     <div class="card-header">الربح اليومي</div>
@@ -181,16 +154,25 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="amount">المبلغ</label>
-                    <input type="number" id="amount" step="0.01" min="0" required placeholder="أدخل المبلغ">
-                </div>
-
-                <div class="form-group">
-                    <label for="currency">العملة</label>
-                    <select id="currency" required class="currency-select">
-                        <option value="">اختر العملة</option>
-                    </select>
+                <div class="form-group amount-with-currency">
+                    <div class="amount-field">
+                        <label for="amount">المبلغ</label>
+                        <input type="number" id="amount" step="0.01" min="0" required placeholder="أدخل المبلغ">
+                    </div>
+                    <div class="currency-field">
+                        <label for="currency">العملة</label>
+                        <div class="currency-selector-wrapper">
+                            <span id="selectedCurrency" class="selected-currency">USD</span>
+                            <button type="button" id="changeCurrencyBtn" class="btn-change-currency">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                            </button>
+                        </div>
+                        <select id="currency" class="currency-select-hidden">
+                            <option value="">اختر العملة</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -255,6 +237,29 @@
         </div>
     </div>
 
+    <!-- Charts Modal -->
+    <div id="chartsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2>📈 الرسوم البيانية</h2>
+                <button class="modal-close" id="closeChartsModal">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <h3>الربح الشهري</h3>
+                        <canvas id="profitChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>الصادرات vs الواردات</h3>
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Workspace Settings Modal -->
     <div id="workspaceSettingsModal" class="modal">
         <div class="modal-content">
@@ -275,6 +280,24 @@
                         <input type="text" id="newCurrencyCode" placeholder="رمز العملة (مثال: USD)" maxlength="3" class="currency-input">
                         <input type="text" id="newCurrencyName" placeholder="اسم العملة (مثال: دولار أمريكي)" class="currency-input">
                         <button id="addCurrencyBtn" class="btn-modal-primary">➕ إضافة عملة</button>
+                    </div>
+
+                    <div class="default-currency-section">
+                        <p class="settings-description">⭐ العملة الافتراضية المحددة حالياً: <strong id="currentDefaultCurrency">USD</strong></p>
+                        <p class="settings-note">اضغط على النجمة بجانب العملة لتعيينها كافتراضية</p>
+                    </div>
+                </div>
+
+                <!-- Danger Zone Section -->
+                <div class="settings-section danger-zone">
+                    <h3>⚠️ منطقة الخطر</h3>
+                    <p class="settings-description">إجراءات حساسة - لا يمكن التراجع عنها</p>
+
+                    <div class="danger-actions">
+                        <button id="deleteBackupBtn" class="btn-danger-action">
+                            🗑️ حذف النسخة الاحتياطية من Drive
+                        </button>
+                        <p class="danger-warning">⚠️ سيتم حذف جميع البيانات المحفوظة على Google Drive</p>
                     </div>
                 </div>
             </div>

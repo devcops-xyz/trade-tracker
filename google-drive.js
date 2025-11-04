@@ -9,6 +9,7 @@ class GoogleDriveBackup {
         this.accessToken = null;
         this.fileId = null;
         this.workspaceCurrencies = [];
+        this.defaultCurrency = 'USD';
 
         // Check if configured
         if (this.CLIENT_ID === 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com') {
@@ -109,7 +110,7 @@ class GoogleDriveBackup {
         }
     }
 
-    async joinWorkspace(code, role = 'writer') {
+    async joinWorkspace(code, role = 'reader') {
         if (!code || code.length !== 6) {
             alert('رمز مساحة العمل غير صحيح');
             return;
@@ -118,38 +119,51 @@ class GoogleDriveBackup {
         const workspaceId = code.toUpperCase();
         this.workspaceId = workspaceId;
         localStorage.setItem('workspace_id', workspaceId);
-        localStorage.setItem('workspace_role', role); // Save selected role (writer/reader)
+        localStorage.setItem('workspace_role', role); // Always 'reader' by default
         this.updateBackupFilename();
+
+        console.log('=== JOINING WORKSPACE ===');
+        console.log('Workspace ID:', workspaceId);
+        console.log('Role:', role);
+        console.log('Backup filename:', this.BACKUP_FILENAME);
+
+        // Show app first
         this.showApp();
         this.displayWorkspaceCode();
         this.updateBackupControlsVisibility();
         this.updateUIBasedOnRole();
 
         // Load shared data from Drive
+        console.log('Starting to load workspace data...');
         await this.loadWorkspaceData();
 
         // Show notification
         if (window.tracker) {
-            window.tracker.showNotification('✓ تم الانضمام لمساحة العمل بنجاح!');
+            window.tracker.showNotification('✓ تم الانضمام لمساحة العمل - انتظر تحميل البيانات...');
         }
     }
 
     async loadWorkspaceData() {
         if (!this.accessToken) {
-            console.error('Load workspace data failed: No access token');
+            console.error('❌ Load workspace data failed: No access token');
+            if (window.tracker) {
+                window.tracker.showNotification('❌ خطأ: لم يتم تسجيل الدخول');
+            }
             return;
         }
 
         try {
-            console.log('Looking for backup file:', this.BACKUP_FILENAME);
+            console.log('🔍 Looking for backup file:', this.BACKUP_FILENAME);
+            console.log('🔑 Access token exists:', !!this.accessToken);
 
             // Find the backup file for this workspace
             await this.findBackupFile();
 
             if (this.fileId) {
-                console.log('Found backup file with ID:', this.fileId);
+                console.log('✓ Found backup file with ID:', this.fileId);
 
                 // Download the file
+                console.log('📥 Downloading file...');
                 const response = await fetch(
                     `https://www.googleapis.com/drive/v3/files/${this.fileId}?alt=media`,
                     {
@@ -159,45 +173,79 @@ class GoogleDriveBackup {
                     }
                 );
 
-                console.log('Download response status:', response.status);
+                console.log('📡 Download response status:', response.status);
 
                 if (response.ok) {
                     const backupData = await response.json();
-                    console.log('Backup data retrieved:', backupData);
+                    console.log('📦 Backup data retrieved:', backupData);
 
                     // Restore data
                     if (backupData.data && backupData.data.transactions) {
-                        console.log('Found', backupData.data.transactions.length, 'transactions');
+                        console.log('✓ Found', backupData.data.transactions.length, 'transactions');
                         localStorage.setItem('transactions', JSON.stringify(backupData.data.transactions));
+
+                        // Also save currencies if they exist
+                        if (backupData.data.currencies) {
+                            localStorage.setItem('workspace_currencies', JSON.stringify(backupData.data.currencies));
+                            this.workspaceCurrencies = backupData.data.currencies;
+                        }
+
+                        // Save default currency if it exists
+                        if (backupData.data.defaultCurrency) {
+                            localStorage.setItem('default_currency', backupData.data.defaultCurrency);
+                            this.defaultCurrency = backupData.data.defaultCurrency;
+                        }
 
                         // Reload the app
                         if (window.tracker) {
                             window.tracker.transactions = backupData.data.transactions;
                             window.tracker.renderTransactions();
                             window.tracker.updateDashboard();
+                            window.tracker.updateCharts();
                         }
 
-                        console.log('✓ Workspace data loaded from Drive');
+                        // Reload currencies dropdown
+                        this.populateCurrencySelector();
+                        this.setDefaultCurrencyInForm();
+                        this.updateDefaultCurrencyDisplay();
+
+                        console.log('✓ Workspace data loaded from Drive successfully!');
+                        if (window.tracker) {
+                            window.tracker.showNotification(`✓ تم تحميل ${backupData.data.transactions.length} معاملة`);
+                        }
                     } else {
-                        console.warn('Backup data format invalid or empty');
+                        console.warn('⚠️ Backup data format invalid or empty');
+                        if (window.tracker) {
+                            window.tracker.showNotification('⚠️ البيانات المحفوظة فارغة');
+                        }
                     }
                 } else if (response.status === 401) {
-                    console.error('Token expired - need to re-authenticate');
+                    console.error('❌ Token expired - need to re-authenticate');
                     if (window.tracker) {
                         window.tracker.showNotification('⚠️ انتهت صلاحية الجلسة. سجل دخول مرة أخرى');
                     }
                     this.signOut();
                 } else {
-                    console.error('Failed to download backup:', response.status, response.statusText);
+                    const errorText = await response.text();
+                    console.error('❌ Failed to download backup:', response.status, response.statusText);
+                    console.error('Error details:', errorText);
+                    if (window.tracker) {
+                        window.tracker.showNotification(`❌ خطأ في التحميل: ${response.status}`);
+                    }
                 }
             } else {
-                console.log('No existing backup found for workspace:', this.workspaceId);
+                console.log('ℹ️ No existing backup found for workspace:', this.workspaceId);
+                console.log('💡 This might be a new workspace or the creator hasn\'t backed up yet');
                 if (window.tracker) {
-                    window.tracker.showNotification('ℹ️ لا توجد بيانات في مساحة العمل بعد');
+                    window.tracker.showNotification('ℹ️ مساحة العمل فارغة. انتظر حتى يضيف المنشئ معاملات');
                 }
             }
         } catch (error) {
-            console.error('Error loading workspace data:', error);
+            console.error('❌ Error loading workspace data:', error);
+            console.error('Error stack:', error.stack);
+            if (window.tracker) {
+                window.tracker.showNotification('❌ خطأ في تحميل البيانات');
+            }
             throw error; // Re-throw to be caught by syncWorkspace
         }
     }
@@ -215,6 +263,21 @@ class GoogleDriveBackup {
         }
         this.displayWorkspaceRole();
         this.displayLastSync();
+        this.updateLeaveButtonVisibility();
+    }
+
+    updateLeaveButtonVisibility() {
+        const role = localStorage.getItem('workspace_role');
+        const leaveBtn = document.getElementById('leaveWorkspaceBtn');
+
+        if (leaveBtn) {
+            if (role === 'creator') {
+                // Hide leave button for creators - they own the workspace
+                leaveBtn.style.display = 'none';
+            } else {
+                leaveBtn.style.display = 'inline-block';
+            }
+        }
     }
 
     displayWorkspaceRole() {
@@ -439,8 +502,8 @@ class GoogleDriveBackup {
 
         confirmJoinBtn?.addEventListener('click', () => {
             const code = document.getElementById('workspaceCodeInput').value;
-            const role = document.querySelector('input[name="joinRole"]:checked')?.value || 'writer';
-            this.joinWorkspace(code, role);
+            // Always join as reader for security - admin can upgrade later
+            this.joinWorkspace(code, 'reader');
         });
 
         cancelJoinBtn?.addEventListener('click', () => {
@@ -487,6 +550,59 @@ class GoogleDriveBackup {
         const addCurrencyBtn = document.getElementById('addCurrencyBtn');
         addCurrencyBtn?.addEventListener('click', () => {
             this.addCurrency();
+        });
+
+        // Currency selector button
+        const changeCurrencyBtn = document.getElementById('changeCurrencyBtn');
+        const currencyWrapper = document.querySelector('.currency-selector-wrapper');
+        const currencySelect = document.getElementById('currency');
+        const selectedCurrencyEl = document.getElementById('selectedCurrency');
+
+        changeCurrencyBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currencySelect.classList.contains('currency-select-hidden')) {
+                currencySelect.classList.remove('currency-select-hidden');
+                currencySelect.classList.add('currency-select');
+                currencyWrapper.style.display = 'none';
+            }
+        });
+
+        currencySelect?.addEventListener('change', () => {
+            selectedCurrencyEl.textContent = currencySelect.value;
+            currencySelect.classList.add('currency-select-hidden');
+            currencySelect.classList.remove('currency-select');
+            currencyWrapper.style.display = 'flex';
+        });
+
+        // Delete backup button
+        const deleteBackupBtn = document.getElementById('deleteBackupBtn');
+        deleteBackupBtn?.addEventListener('click', () => {
+            this.deleteBackup();
+        });
+
+        // Charts Modal controls
+        const openChartsBtn = document.getElementById('openChartsBtn');
+        const closeChartsBtn = document.getElementById('closeChartsModal');
+        const chartsModal = document.getElementById('chartsModal');
+
+        openChartsBtn?.addEventListener('click', () => {
+            chartsModal.classList.add('active');
+            // Refresh charts when opening modal
+            if (window.tracker) {
+                setTimeout(() => {
+                    window.tracker.updateCharts();
+                }, 100);
+            }
+        });
+
+        closeChartsBtn?.addEventListener('click', () => {
+            chartsModal.classList.remove('active');
+        });
+
+        chartsModal?.addEventListener('click', (e) => {
+            if (e.target === chartsModal) {
+                chartsModal.classList.remove('active');
+            }
         });
 
         // Modal controls
@@ -655,11 +771,17 @@ class GoogleDriveBackup {
 
             // Get current data from localStorage
             const transactions = localStorage.getItem('transactions') || '[]';
+            const currencies = localStorage.getItem('workspace_currencies') || '[]';
+            const defaultCurrency = localStorage.getItem('default_currency') || 'USD';
+
             const backupData = {
                 timestamp: new Date().toISOString(),
                 version: '1.0',
+                workspaceId: this.workspaceId || null,
                 data: {
-                    transactions: JSON.parse(transactions)
+                    transactions: JSON.parse(transactions),
+                    currencies: JSON.parse(currencies),
+                    defaultCurrency: defaultCurrency
                 }
             };
 
@@ -994,12 +1116,17 @@ class GoogleDriveBackup {
 
             // Get current data from localStorage
             const transactions = localStorage.getItem('transactions') || '[]';
+            const currencies = localStorage.getItem('workspace_currencies') || '[]';
+            const defaultCurrency = localStorage.getItem('default_currency') || 'USD';
+
             const backupData = {
                 timestamp: new Date().toISOString(),
                 version: '1.0',
                 workspaceId: this.workspaceId || null,
                 data: {
-                    transactions: JSON.parse(transactions)
+                    transactions: JSON.parse(transactions),
+                    currencies: JSON.parse(currencies),
+                    defaultCurrency: defaultCurrency
                 }
             };
 
@@ -1059,20 +1186,52 @@ class GoogleDriveBackup {
     loadCurrencies() {
         // Load from localStorage first
         const saved = localStorage.getItem('workspace_currencies');
+        const savedDefault = localStorage.getItem('default_currency');
+
         if (saved) {
             this.workspaceCurrencies = JSON.parse(saved);
         } else {
             // Default currencies
             this.workspaceCurrencies = [
-                { code: 'USD', name: 'دولار أمريكي' },
-                { code: 'EUR', name: 'يورو' },
-                { code: 'SAR', name: 'ريال سعودي' }
+                { code: 'USD', name: 'دولار أمريكي', isDefault: true },
+                { code: 'EUR', name: 'يورو', isDefault: false },
+                { code: 'SAR', name: 'ريال سعودي', isDefault: false }
             ];
             localStorage.setItem('workspace_currencies', JSON.stringify(this.workspaceCurrencies));
         }
 
+        if (savedDefault) {
+            this.defaultCurrency = savedDefault;
+        } else {
+            // Find default from currencies
+            const defaultCurr = this.workspaceCurrencies.find(c => c.isDefault);
+            this.defaultCurrency = defaultCurr ? defaultCurr.code : 'USD';
+            localStorage.setItem('default_currency', this.defaultCurrency);
+        }
+
         this.displayCurrencies();
         this.populateCurrencySelector();
+        this.setDefaultCurrencyInForm();
+        this.updateDefaultCurrencyDisplay();
+    }
+
+    setDefaultCurrencyInForm() {
+        const selectedCurrencyEl = document.getElementById('selectedCurrency');
+        if (selectedCurrencyEl) {
+            selectedCurrencyEl.textContent = this.defaultCurrency;
+        }
+
+        const currencySelect = document.getElementById('currency');
+        if (currencySelect) {
+            currencySelect.value = this.defaultCurrency;
+        }
+    }
+
+    updateDefaultCurrencyDisplay() {
+        const currentDefaultEl = document.getElementById('currentDefaultCurrency');
+        if (currentDefaultEl) {
+            currentDefaultEl.textContent = this.defaultCurrency;
+        }
     }
 
     displayCurrencies() {
@@ -1084,17 +1243,55 @@ class GoogleDriveBackup {
             return;
         }
 
-        container.innerHTML = this.workspaceCurrencies.map((currency, index) => `
-            <div class="currency-item">
-                <div class="currency-info">
-                    <span class="currency-code">${currency.code}</span>
-                    <span class="currency-name">${currency.name}</span>
+        container.innerHTML = this.workspaceCurrencies.map((currency, index) => {
+            const isDefault = currency.code === this.defaultCurrency;
+            const defaultClass = isDefault ? 'default' : '';
+            const starClass = isDefault ? 'active' : '';
+
+            return `
+                <div class="currency-item ${defaultClass}">
+                    <div class="currency-info">
+                        <span class="currency-code">${currency.code}</span>
+                        <span class="currency-name">${currency.name}</span>
+                    </div>
+                    <div class="currency-actions">
+                        <button class="btn-set-default ${starClass}"
+                                onclick="window.driveBackup.setDefaultCurrency('${currency.code}')"
+                                title="تعيين كعملة افتراضية">
+                            ${isDefault ? '⭐' : '☆'}
+                        </button>
+                        <button class="btn-remove-currency"
+                                onclick="window.driveBackup.removeCurrency(${index})"
+                                ${isDefault ? 'disabled' : ''}>
+                            🗑️
+                        </button>
+                    </div>
                 </div>
-                <button class="btn-remove-currency" onclick="window.driveBackup.removeCurrency(${index})">
-                    🗑️ حذف
-                </button>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    setDefaultCurrency(code) {
+        this.defaultCurrency = code;
+        localStorage.setItem('default_currency', code);
+
+        // Update isDefault flags
+        this.workspaceCurrencies = this.workspaceCurrencies.map(c => ({
+            ...c,
+            isDefault: c.code === code
+        }));
+        localStorage.setItem('workspace_currencies', JSON.stringify(this.workspaceCurrencies));
+
+        this.displayCurrencies();
+        this.setDefaultCurrencyInForm();
+        this.updateDefaultCurrencyDisplay();
+
+        // Auto-backup
+        this.autoBackup();
+
+        if (window.tracker) {
+            window.tracker.showNotification(`✓ تم تعيين ${code} كعملة افتراضية`);
+        }
     }
 
     populateCurrencySelector() {
@@ -1149,6 +1346,14 @@ class GoogleDriveBackup {
     }
 
     removeCurrency(index) {
+        const currency = this.workspaceCurrencies[index];
+
+        // Prevent removing default currency
+        if (currency.code === this.defaultCurrency) {
+            alert('لا يمكن حذف العملة الافتراضية. قم بتعيين عملة أخرى كافتراضية أولاً');
+            return;
+        }
+
         if (!confirm('هل أنت متأكد من حذف هذه العملة؟')) {
             return;
         }
@@ -1161,6 +1366,63 @@ class GoogleDriveBackup {
 
         // Auto-backup to sync currencies
         this.autoBackup();
+    }
+
+    async deleteBackup() {
+        // Triple confirmation for dangerous action
+        if (!confirm('⚠️ تحذير!\n\nهل أنت متأكد تماماً من حذف النسخة الاحتياطية؟\n\nسيتم حذف جميع البيانات المحفوظة على Google Drive.\nلن يتمكن أعضاء الفريق من استعادة البيانات.\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
+            return;
+        }
+
+        if (!confirm('⚠️ تأكيد نهائي\n\nاضغط "موافق" للحذف النهائي')) {
+            return;
+        }
+
+        if (!this.accessToken) {
+            alert('يرجى تسجيل الدخول أولاً');
+            return;
+        }
+
+        try {
+            // Find the backup file first
+            await this.findBackupFile();
+
+            if (!this.fileId) {
+                alert('لا توجد نسخة احتياطية لحذفها');
+                return;
+            }
+
+            console.log('🗑️ Deleting backup file:', this.fileId);
+
+            const response = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${this.fileId}`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Bearer ${this.accessToken}`
+                    }
+                }
+            );
+
+            if (response.ok || response.status === 204) {
+                console.log('✓ Backup deleted successfully');
+                this.fileId = null; // Clear the file ID
+
+                if (window.tracker) {
+                    window.tracker.showNotification('✓ تم حذف النسخة الاحتياطية من Drive');
+                }
+
+                alert('✓ تم حذف النسخة الاحتياطية من Google Drive بنجاح\n\nملاحظة: البيانات المحلية لا تزال موجودة على جهازك');
+            } else if (response.status === 401) {
+                alert('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مجدداً');
+                this.signOut();
+            } else {
+                throw new Error(`Failed to delete: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('❌ Error deleting backup:', error);
+            alert('فشل حذف النسخة الاحتياطية. يرجى المحاولة مرة أخرى');
+        }
     }
 }
 
