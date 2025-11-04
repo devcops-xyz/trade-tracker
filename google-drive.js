@@ -643,6 +643,12 @@ class GoogleDriveBackup {
             settingsModal.classList.add('active');
             this.loadCurrencies();
             this.displayMemberManagement();
+
+            // Update email display in case it wasn't set earlier
+            const savedEmail = localStorage.getItem('gdrive_email');
+            if (savedEmail) {
+                this.updateUISignedIn(savedEmail);
+            }
         });
 
         closeSettingsBtn?.addEventListener('click', () => {
@@ -830,7 +836,9 @@ class GoogleDriveBackup {
 
         if (signInSection) signInSection.style.display = 'none';
         if (signedInSection) signedInSection.style.display = 'block';
-        if (userEmail) userEmail.textContent = email;
+        if (userEmail) {
+            userEmail.textContent = email || this.currentUserEmail || localStorage.getItem('gdrive_email') || '';
+        }
     }
 
     updateUISignedOut() {
