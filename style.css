@@ -864,25 +864,242 @@ h2 {
 
 /* Responsive */
 @media (max-width: 768px) {
-    header h1 {
-        font-size: 2rem;
+    body {
+        padding: 10px;
     }
 
+    /* Header */
+    .header-top {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+
+    header h1 {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 0.95rem;
+    }
+
+    .workspace-info {
+        width: 100%;
+        align-items: center;
+    }
+
+    .workspace-badge {
+        justify-content: center;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .workspace-code {
+        font-size: 1rem;
+    }
+
+    /* Dashboard Cards */
     .profit-cards {
         grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .card {
+        padding: 15px;
     }
 
     .card-value {
-        font-size: 2rem;
+        font-size: 1.8rem;
     }
 
+    .card-footer {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+    }
+
+    /* Forms */
+    section {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    .form-group input {
+        padding: 14px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+
+    .radio-custom {
+        padding: 14px;
+        font-size: 0.95rem;
+    }
+
+    .btn-submit {
+        padding: 16px;
+        font-size: 1rem;
+    }
+
+    /* Transaction Items */
     .transaction-item {
         flex-direction: column;
         align-items: flex-start;
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .transaction-type {
+        font-size: 1rem;
     }
 
     .transaction-amount {
-        margin-right: 0;
+        margin-left: 0;
+        margin-top: 8px;
+        font-size: 1.2rem;
+    }
+
+    .btn-delete {
+        width: 100%;
         margin-top: 10px;
+        margin-right: 0;
+        padding: 10px;
+    }
+
+    /* Modals */
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .modal-header {
+        padding: 15px;
+    }
+
+    .modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+
+    .btn-modal-primary,
+    .btn-modal-secondary,
+    .btn-modal-danger {
+        padding: 14px;
+        font-size: 0.95rem;
+    }
+
+    /* Backup List */
+    .backup-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .backup-item-date {
+        font-size: 0.9rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-restore-backup {
+        width: 100%;
+        padding: 10px;
+    }
+
+    /* Sign-in Gate */
+    .sign-in-content {
+        padding: 20px;
+        width: 90%;
+    }
+
+    .sign-in-icon {
+        font-size: 3.5rem;
+    }
+
+    .sign-in-content h1 {
+        font-size: 1.5rem;
+    }
+
+    .sign-in-description {
+        font-size: 1rem;
+    }
+
+    .sign-in-note {
+        font-size: 0.85rem;
+    }
+
+    .btn-sign-in-gate {
+        padding: 14px 25px;
+        font-size: 1rem;
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Workspace Selection */
+    .workspace-actions {
+        width: 100%;
+        padding: 0 20px;
+    }
+
+    .btn-workspace-primary,
+    .btn-workspace-secondary {
+        padding: 14px 20px;
+        font-size: 0.95rem;
+    }
+
+    .workspace-form {
+        width: 100%;
+        padding: 0 20px;
+    }
+
+    .workspace-input {
+        font-size: 1.1rem;
+        padding: 14px;
+    }
+
+    /* Backup Controls */
+    .backup-controls {
+        margin-top: 15px;
+    }
+
+    .btn-backup {
+        padding: 12px 18px;
+        font-size: 0.9rem;
+    }
+
+    /* Better touch targets */
+    button {
+        min-height: 44px;
+    }
+
+    .btn-share {
+        font-size: 1.4rem;
+        padding: 8px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+
+    .card-value {
+        font-size: 1.6rem;
+    }
+
+    .workspace-code {
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+    }
+
+    .transaction-item {
+        padding: 10px;
     }
 }
