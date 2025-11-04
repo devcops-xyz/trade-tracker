@@ -1298,10 +1298,11 @@ class TradeTracker {
         const commentsHTML = transaction.comments.map(comment => {
             const time = new Date(comment.timestamp);
             const relativeTime = window.driveBackup?.getRelativeTime(time) || time.toLocaleDateString('ar-EG');
+            const username = window.driveBackup?.getUsernameFromEmail(comment.author) || comment.author;
 
             return `
                 <div class="comment-item">
-                    <div class="comment-author">${comment.author}</div>
+                    <div class="comment-author">${username}</div>
                     <div class="comment-text">${comment.text}</div>
                     <div class="comment-time">${relativeTime}</div>
                 </div>

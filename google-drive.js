@@ -846,6 +846,13 @@ class GoogleDriveBackup {
         this.showSignInGate();
     }
 
+    // Extract username from email (part before @)
+    getUsernameFromEmail(email) {
+        if (!email) return '';
+        const atIndex = email.indexOf('@');
+        return atIndex > 0 ? email.substring(0, atIndex) : email;
+    }
+
     updateUISignedIn(email) {
         const signInSection = document.getElementById('signInSection');
         const signedInSection = document.getElementById('signedInSection');
@@ -854,7 +861,8 @@ class GoogleDriveBackup {
         if (signInSection) signInSection.style.display = 'none';
         if (signedInSection) signedInSection.style.display = 'block';
         if (userEmail) {
-            userEmail.textContent = email || this.currentUserEmail || localStorage.getItem('gdrive_email') || '';
+            const fullEmail = email || this.currentUserEmail || localStorage.getItem('gdrive_email') || '';
+            userEmail.textContent = this.getUsernameFromEmail(fullEmail);
         }
     }
 
@@ -1857,7 +1865,7 @@ class GoogleDriveBackup {
                 <div class="member-card">
                     <div class="member-icon">${member.email.charAt(0).toUpperCase()}</div>
                     <div class="member-info">
-                        <div class="member-email">${member.email}</div>
+                        <div class="member-email">${this.getUsernameFromEmail(member.email)}</div>
                         <div class="member-joined">انضم في ${joinedDate}</div>
                     </div>
                     ${isCreator ?
@@ -1953,7 +1961,7 @@ class GoogleDriveBackup {
             return `
                 <div class="activity-item ${actionClass}">
                     <div class="activity-details">
-                        <span class="activity-user">${activity.user}</span>
+                        <span class="activity-user">${this.getUsernameFromEmail(activity.user)}</span>
                         <span class="activity-action">${activity.description}</span>
                     </div>
                     <div class="activity-time">${relativeTime}</div>
@@ -2320,7 +2328,7 @@ class GoogleDriveBackup {
                 <div class="admin-user-card ${isBlocked ? 'blocked' : ''}">
                     <div class="admin-user-avatar">${member.email.charAt(0).toUpperCase()}</div>
                     <div class="admin-user-info">
-                        <div class="admin-user-email">${member.email}</div>
+                        <div class="admin-user-email">${this.getUsernameFromEmail(member.email)}</div>
                         <div class="admin-user-meta">
                             <span class="user-role-badge ${member.role}">${roleNames[member.role]}</span>
                             <span class="user-joined-date">انضم ${joinedDate}</span>
@@ -2465,7 +2473,7 @@ class GoogleDriveBackup {
                 <div class="admin-log-item action-${activity.action}">
                     <div class="log-icon">${icon}</div>
                     <div class="log-details">
-                        <div class="log-user">${activity.user}</div>
+                        <div class="log-user">${this.getUsernameFromEmail(activity.user)}</div>
                         <div class="log-description">${activity.description}</div>
                         <div class="log-meta">
                             <span class="log-type">${activity.targetType}</span>
