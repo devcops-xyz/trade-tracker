@@ -515,14 +515,14 @@ class GoogleDriveBackup {
         const backupControls = document.querySelector('.backup-controls');
 
         if (backupControls) {
-            if (workspaceRole === 'member') {
-                // Hide backup settings for members
-                backupControls.style.display = 'none';
-                console.log('Backup controls hidden for workspace member');
-            } else {
-                // Show backup settings for creators
+            // Only show backup controls for creators
+            if (workspaceRole === 'creator') {
                 backupControls.style.display = 'flex';
                 console.log('Backup controls visible for workspace creator');
+            } else {
+                // Hide backup settings for readers and writers
+                backupControls.style.display = 'none';
+                console.log('Backup controls hidden for non-creator role:', workspaceRole);
             }
         }
     }
@@ -1022,6 +1022,12 @@ class GoogleDriveBackup {
                 localStorage.setItem('last_sync_time', new Date().toISOString());
                 this.updateSyncStatus();
 
+                // Share file with workspace members if this is a workspace
+                if (this.workspaceId && this.workspaceMembers.length > 0) {
+                    console.log('📤 Sharing workspace file with members...');
+                    await this.shareFileWithMembers();
+                }
+
                 const date = new Date().toLocaleString('ar-EG');
                 this.showStatus(`✓ تم النسخ الاحتياطي بنجاح (${date})`, 'success');
 
@@ -1258,8 +1264,9 @@ class GoogleDriveBackup {
 
     async findBackupFile() {
         try {
+            // Search in user's Drive and shared with user
             const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files?q=name='${this.BACKUP_FILENAME}'&spaces=drive`,
+                `https://www.googleapis.com/drive/v3/files?q=name='${this.BACKUP_FILENAME}'&spaces=drive&fields=files(id,name,ownedByMe)`,
                 {
                     headers: {
                         Authorization: `Bearer ${this.accessToken}`
@@ -1268,11 +1275,85 @@ class GoogleDriveBackup {
             );
 
             const data = await response.json();
+            console.log('📂 Found files:', data.files);
+
             if (data.files && data.files.length > 0) {
                 this.fileId = data.files[0].id;
+                console.log('✓ Using file ID:', this.fileId, 'Owned by me:', data.files[0].ownedByMe);
             }
         } catch (error) {
             console.error('Error finding backup file:', error);
+        }
+    }
+
+    async shareFileWithMembers() {
+        if (!this.fileId || !this.workspaceMembers || this.workspaceMembers.length === 0) {
+            console.log('📁 No file or members to share with');
+            return;
+        }
+
+        const role = localStorage.getItem('workspace_role');
+        if (role !== 'creator') {
+            console.log('📁 Only creators can share files');
+            return;
+        }
+
+        console.log('📤 Sharing file with', this.workspaceMembers.length, 'members...');
+
+        for (const member of this.workspaceMembers) {
+            // Skip if member is current user
+            if (member.email === this.currentUserEmail) {
+                console.log('⏭️ Skipping current user:', member.email);
+                continue;
+            }
+
+            try {
+                // Check if already shared
+                const permissionsResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${this.fileId}/permissions?fields=permissions(id,emailAddress)`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${this.accessToken}`
+                        }
+                    }
+                );
+
+                if (permissionsResponse.ok) {
+                    const permissionsData = await permissionsResponse.json();
+                    const existingPermission = permissionsData.permissions?.find(p => p.emailAddress === member.email);
+
+                    if (existingPermission) {
+                        console.log('✓ Already shared with:', member.email);
+                        continue;
+                    }
+                }
+
+                // Share file with member (writer permission for drive file access)
+                const shareResponse = await fetch(
+                    `https://www.googleapis.com/drive/v3/files/${this.fileId}/permissions`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${this.accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            type: 'user',
+                            role: 'writer', // Drive permission (not app role)
+                            emailAddress: member.email
+                        })
+                    }
+                );
+
+                if (shareResponse.ok) {
+                    console.log('✓ Shared file with:', member.email);
+                } else {
+                    const errorText = await shareResponse.text();
+                    console.error('❌ Failed to share with:', member.email, errorText);
+                }
+            } catch (error) {
+                console.error('❌ Error sharing with:', member.email, error);
+            }
         }
     }
 
@@ -1382,6 +1463,12 @@ class GoogleDriveBackup {
                 // For personal use, save today's date as last backup
                 if (!this.workspaceId) {
                     localStorage.setItem('last_backup_date', new Date().toDateString());
+                }
+
+                // Share file with workspace members if this is a workspace
+                if (this.workspaceId && this.workspaceMembers.length > 0) {
+                    console.log('📤 Sharing workspace file with members...');
+                    await this.shareFileWithMembers();
                 }
 
                 console.log('✓ Auto-backup completed successfully');
