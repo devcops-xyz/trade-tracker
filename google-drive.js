@@ -199,6 +199,20 @@ class GoogleDriveBackup {
         }
     }
 
+    async syncWorkspace() {
+        if (!this.workspaceId || !this.accessToken) return;
+
+        if (window.tracker) {
+            window.tracker.showNotification('🔄 جاري التحديث من Drive...');
+        }
+
+        await this.loadWorkspaceData();
+
+        if (window.tracker) {
+            window.tracker.showNotification('✓ تم التحديث بنجاح');
+        }
+    }
+
     setupEventListeners() {
         console.log('Setting up Google Drive event listeners...');
         console.log('Client ID:', this.CLIENT_ID);
@@ -243,6 +257,11 @@ class GoogleDriveBackup {
 
         shareWorkspaceBtn?.addEventListener('click', () => {
             this.shareWorkspace();
+        });
+
+        const syncWorkspaceBtn = document.getElementById('syncWorkspaceBtn');
+        syncWorkspaceBtn?.addEventListener('click', () => {
+            this.syncWorkspace();
         });
 
         // Modal controls

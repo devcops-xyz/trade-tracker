@@ -73,7 +73,8 @@ header h1 {
     font-family: monospace;
 }
 
-.btn-share {
+.btn-share,
+.btn-sync {
     background: none;
     border: none;
     cursor: pointer;
@@ -82,8 +83,18 @@ header h1 {
     transition: transform 0.2s;
 }
 
-.btn-share:hover {
+.btn-share:hover,
+.btn-sync:hover {
     transform: scale(1.2);
+}
+
+.btn-sync:active {
+    animation: spin 0.5s ease;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Backup Controls */
