@@ -1913,17 +1913,46 @@ class GoogleDriveBackup {
         }
     }
 
-    deleteAccount() {
-        if (!confirm('⚠️ تحذير: حذف الحساب\n\nهل أنت متأكد من حذف حسابك وجميع البيانات المحلية؟\n\n• سيتم حذف جميع المعاملات المحلية\n• سيتم الخروج من Google Drive\n• لن يتم حذف النسخ الاحتياطية من Google Drive\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
+    async deleteAccount() {
+        if (!confirm('⚠️ تحذير: حذف الحساب\n\nهل أنت متأكد من حذف حسابك وجميع البيانات؟\n\n• سيتم حذف جميع المعاملات المحلية\n• سيتم حذف النسخة الاحتياطية من Google Drive\n• سيتم الخروج من Google Drive\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
             return;
         }
 
         // Double confirmation
-        if (!confirm('هل أنت متأكد 100%؟ سيتم حذف جميع البيانات المحلية نهائياً!')) {
+        if (!confirm('هل أنت متأكد 100%؟ سيتم حذف جميع البيانات نهائياً بما فيها النسخ الاحتياطية!')) {
             return;
         }
 
         try {
+            // Delete Google Drive backup file first (if exists)
+            if (this.accessToken && this.fileId) {
+                console.log('🗑️ Deleting Google Drive backup file...');
+                try {
+                    await this.findBackupFile();
+
+                    if (this.fileId) {
+                        const response = await fetch(
+                            `https://www.googleapis.com/drive/v3/files/${this.fileId}`,
+                            {
+                                method: 'DELETE',
+                                headers: {
+                                    Authorization: `Bearer ${this.accessToken}`
+                                }
+                            }
+                        );
+
+                        if (response.ok || response.status === 404) {
+                            console.log('✓ Google Drive backup deleted');
+                        } else {
+                            console.warn('⚠️ Could not delete Drive backup:', response.status);
+                        }
+                    }
+                } catch (driveError) {
+                    console.error('Error deleting Drive backup:', driveError);
+                    // Continue with local deletion even if Drive deletion fails
+                }
+            }
+
             // Clear all local storage
             localStorage.clear();
 
@@ -1955,7 +1984,7 @@ class GoogleDriveBackup {
             // Show sign-in gate
             this.showSignInGate();
 
-            console.log('✓ Account deleted successfully');
+            console.log('✓ Account and all data deleted successfully');
         } catch (error) {
             console.error('Error deleting account:', error);
             alert('حدث خطأ أثناء حذف الحساب. يرجى المحاولة مرة أخرى.');
