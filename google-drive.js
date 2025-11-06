@@ -2127,16 +2127,13 @@ class GoogleDriveBackup {
         }).join('');
 
         // Attach event listeners to role selects
-        const container = document.getElementById('membersList');
-        if (container) {
-            container.querySelectorAll('.member-role-select').forEach(select => {
-                select.addEventListener('change', (e) => {
-                    const index = parseInt(e.target.getAttribute('data-member-index'));
-                    const newRole = e.target.value;
-                    this.changeMemberRole(index, newRole);
-                });
+        container.querySelectorAll('.member-role-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const index = parseInt(e.target.getAttribute('data-member-index'));
+                const newRole = e.target.value;
+                this.changeMemberRole(index, newRole);
             });
-        }
+        });
     }
 
     changeMemberRole(index, newRole) {
