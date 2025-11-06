@@ -1571,12 +1571,12 @@ class GoogleDriveBackup {
                     </div>
                     <div class="currency-actions">
                         <button class="btn-set-default ${starClass}"
-                                onclick="window.driveBackup.setDefaultCurrency('${currency.code}')"
+                                data-currency-code="${currency.code}"
                                 title="تعيين كعملة افتراضية">
                             ${isDefault ? '⭐' : '☆'}
                         </button>
                         <button class="btn-remove-currency"
-                                onclick="window.driveBackup.removeCurrency(${index})"
+                                data-currency-index="${index}"
                                 ${isDefault ? 'disabled' : ''}>
                             🗑️
                         </button>
@@ -1584,6 +1584,21 @@ class GoogleDriveBackup {
                 </div>
             `;
         }).join('');
+
+        // Attach event listeners to currency buttons
+        container.querySelectorAll('.btn-set-default').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const code = e.target.getAttribute('data-currency-code');
+                this.setDefaultCurrency(code);
+            });
+        });
+
+        container.querySelectorAll('.btn-remove-currency').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.getAttribute('data-currency-index'));
+                this.removeCurrency(index);
+            });
+        });
     }
 
     setDefaultCurrency(code) {
@@ -1815,7 +1830,7 @@ class GoogleDriveBackup {
                         <div class="backup-item-date">📅 ${date} ${latestBadge}</div>
                         <div class="backup-item-count">📊 ${backup.transactionCount} معاملة</div>
                     </div>
-                    <button class="btn-delete-backup" onclick="window.driveBackup.deleteRevision('${backup.revisionId}', '${date}${latestWarning}')">
+                    <button class="btn-delete-backup" data-revision-id="${backup.revisionId}" data-date="${date}${latestWarning}">
                         🗑️ حذف
                     </button>
                 </div>
@@ -1837,7 +1852,7 @@ class GoogleDriveBackup {
                 <div class="backup-list deletion-list">
                     ${backupListHTML}
                 </div>
-                <button class="btn-modal-secondary" onclick="window.driveBackup.cancelDeletion()">
+                <button id="cancelDeletionBtn" class="btn-modal-secondary">
                     إلغاء
                 </button>
                 <div id="backupStatus" class="backup-status"></div>
@@ -1846,6 +1861,21 @@ class GoogleDriveBackup {
 
         // Store original content for restore
         this.originalModalContent = originalContent;
+
+        // Attach event listeners to delete buttons
+        modalBody.querySelectorAll('.btn-delete-backup').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const revisionId = e.target.getAttribute('data-revision-id');
+                const date = e.target.getAttribute('data-date');
+                this.deleteRevision(revisionId, date);
+            });
+        });
+
+        // Attach event listener to cancel button
+        const cancelBtn = modalBody.querySelector('#cancelDeletionBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.cancelDeletion());
+        }
 
         this.showStatus('', 'info'); // Clear status
     }
@@ -2087,7 +2117,7 @@ class GoogleDriveBackup {
                     </div>
                     ${isCreator ?
                         `<span class="member-role-badge ${member.role}">${roleNames[member.role]}</span>` :
-                        `<select class="member-role-select" onchange="window.driveBackup.changeMemberRole(${index}, this.value)">
+                        `<select class="member-role-select" data-member-index="${index}">
                             <option value="reader" ${member.role === 'reader' ? 'selected' : ''}>قارئ</option>
                             <option value="writer" ${member.role === 'writer' ? 'selected' : ''}>كاتب</option>
                         </select>`
@@ -2095,6 +2125,18 @@ class GoogleDriveBackup {
                 </div>
             `;
         }).join('');
+
+        // Attach event listeners to role selects
+        const container = document.getElementById('membersList');
+        if (container) {
+            container.querySelectorAll('.member-role-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const index = parseInt(e.target.getAttribute('data-member-index'));
+                    const newRole = e.target.value;
+                    this.changeMemberRole(index, newRole);
+                });
+            });
+        }
     }
 
     changeMemberRole(index, newRole) {
@@ -2409,7 +2451,7 @@ class GoogleDriveBackup {
             const buttonText = isAdded ? '✓' : '+';
 
             return `
-                <div class="world-currency-item ${addedClass}" onclick="window.driveBackup.addWorldCurrency('${currency.code}', '${currency.name}')">
+                <div class="world-currency-item ${addedClass}" data-currency-code="${currency.code}" data-currency-name="${currency.name}">
                     <div class="world-currency-info">
                         <div class="world-currency-code">${currency.code}</div>
                         <div class="world-currency-name">${currency.name}</div>
@@ -2420,6 +2462,15 @@ class GoogleDriveBackup {
                 </div>
             `;
         }).join('');
+
+        // Attach event listeners to world currency items
+        container.querySelectorAll('.world-currency-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const code = e.currentTarget.getAttribute('data-currency-code');
+                const name = e.currentTarget.getAttribute('data-currency-name');
+                this.addWorldCurrency(code, name);
+            });
+        });
     }
 
     filterWorldCurrencies(searchTerm) {

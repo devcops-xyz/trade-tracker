@@ -193,6 +193,18 @@ class TradeTracker {
             }
         });
 
+        // Profit Details Buttons (Daily, Weekly, Monthly)
+        const profitDetailButtons = ['dailyDetailsBtn', 'weeklyDetailsBtn', 'monthlyDetailsBtn'];
+        profitDetailButtons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    const period = e.currentTarget.getAttribute('data-period');
+                    this.showProfitDetails(period);
+                });
+            }
+        });
+
         // Reports Modal
         const openReportsBtn = document.getElementById('openReportsBtn');
         const closeReportsBtn = document.getElementById('closeReportsModal');
@@ -464,7 +476,7 @@ class TradeTracker {
 
             const currency = transaction.currency || 'USD';
             const deleteButton = canDelete
-                ? `<button class="btn-delete" onclick="tracker.deleteTransaction(${transaction.id})">🗑️</button>`
+                ? `<button class="btn-delete" data-transaction-id="${transaction.id}">🗑️</button>`
                 : '';
 
             const commentsSection = this.renderComments(transaction);
@@ -480,6 +492,30 @@ class TradeTracker {
                 </div>
             `;
         }).join('');
+
+        // Attach event listeners to delete buttons
+        container.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const transactionId = parseInt(e.target.getAttribute('data-transaction-id'));
+                this.deleteTransaction(transactionId);
+            });
+        });
+
+        // Attach event listeners to comments toggle buttons
+        container.querySelectorAll('.comments-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const transactionId = parseInt(e.target.getAttribute('data-transaction-id'));
+                this.toggleComments(transactionId);
+            });
+        });
+
+        // Attach event listeners to add comment buttons
+        container.querySelectorAll('.btn-add-comment').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const transactionId = parseInt(e.target.getAttribute('data-transaction-id'));
+                this.addCommentFromInput(transactionId);
+            });
+        });
     }
 
     updateDashboard() {
@@ -1311,14 +1347,14 @@ class TradeTracker {
 
         return `
             <div class="transaction-comments">
-                <button class="comments-toggle" onclick="tracker.toggleComments(${transaction.id})">
+                <button class="comments-toggle" data-transaction-id="${transaction.id}">
                     💬 ${transaction.comments.length} تعليق
                 </button>
                 <div id="comments-${transaction.id}" class="comments-list" style="display: none;">
                     ${commentsHTML}
                     <div class="add-comment-form">
                         <input type="text" id="comment-input-${transaction.id}" placeholder="أضف تعليق..." class="comment-input">
-                        <button onclick="tracker.addCommentFromInput(${transaction.id})" class="btn-add-comment">إضافة</button>
+                        <button class="btn-add-comment" data-transaction-id="${transaction.id}">إضافة</button>
                     </div>
                 </div>
             </div>

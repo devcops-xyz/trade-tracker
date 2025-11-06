@@ -86,7 +86,7 @@
                 <div class="profit-line" id="dailyProfitLine">
                     <span class="period-label">اليومي:</span>
                     <span id="dailyProfit" class="profit-value">0.00</span>
-                    <button class="btn-profit-details" id="dailyDetailsBtn" style="display: none;" title="عرض التفاصيل" onclick="tracker.showProfitDetails('daily')">
+                    <button class="btn-profit-details" id="dailyDetailsBtn" style="display: none;" title="عرض التفاصيل" data-period="daily">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="1"></circle>
                             <circle cx="19" cy="12" r="1"></circle>
@@ -100,7 +100,7 @@
                 <div class="profit-line" id="weeklyProfitLine">
                     <span class="period-label">الأسبوعي:</span>
                     <span id="weeklyProfit" class="profit-value">0.00</span>
-                    <button class="btn-profit-details" id="weeklyDetailsBtn" style="display: none;" title="عرض التفاصيل" onclick="tracker.showProfitDetails('weekly')">
+                    <button class="btn-profit-details" id="weeklyDetailsBtn" style="display: none;" title="عرض التفاصيل" data-period="weekly">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="1"></circle>
                             <circle cx="19" cy="12" r="1"></circle>
@@ -114,7 +114,7 @@
                 <div class="profit-line" id="monthlyProfitLine">
                     <span class="period-label">الشهري:</span>
                     <span id="monthlyProfit" class="profit-value">0.00</span>
-                    <button class="btn-profit-details" id="monthlyDetailsBtn" style="display: none;" title="عرض التفاصيل" onclick="tracker.showProfitDetails('monthly')">
+                    <button class="btn-profit-details" id="monthlyDetailsBtn" style="display: none;" title="عرض التفاصيل" data-period="monthly">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="1"></circle>
                             <circle cx="19" cy="12" r="1"></circle>
