@@ -1152,7 +1152,7 @@ class GoogleDriveBackup {
                         <div class="backup-item-date">📅 ${date} ${latestBadge}</div>
                         <div class="backup-item-count">📊 ${backup.transactionCount} معاملة</div>
                     </div>
-                    <button class="btn-restore-backup" onclick="window.driveBackup.restoreFromRevision('${backup.revisionId}')">
+                    <button class="btn-restore-backup" data-revision-id="${backup.revisionId}">
                         استعادة
                     </button>
                 </div>
@@ -1174,7 +1174,7 @@ class GoogleDriveBackup {
                 <div class="backup-list">
                     ${backupListHTML}
                 </div>
-                <button class="btn-modal-secondary" onclick="window.driveBackup.cancelRestore()">
+                <button id="cancelRestoreBtn" class="btn-modal-secondary">
                     إلغاء
                 </button>
                 <div id="backupStatus" class="backup-status"></div>
@@ -1183,6 +1183,21 @@ class GoogleDriveBackup {
 
         // Store original content for restore
         this.originalModalContent = originalContent;
+
+        // Attach event listeners to restore buttons
+        const restoreButtons = modalBody.querySelectorAll('.btn-restore-backup');
+        restoreButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const revisionId = e.target.getAttribute('data-revision-id');
+                this.restoreFromRevision(revisionId);
+            });
+        });
+
+        // Attach event listener to cancel button
+        const cancelBtn = modalBody.querySelector('#cancelRestoreBtn');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => this.cancelRestore());
+        }
 
         this.showStatus('', 'info'); // Clear status
     }
